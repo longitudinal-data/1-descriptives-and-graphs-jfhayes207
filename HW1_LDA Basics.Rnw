@@ -1,0 +1,107 @@
+\documentclass{article}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+
+\begin{document}
+
+\title{LDA Basics\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{9/7/17}
+
+<<tidy=TRUE>>=
+setwd("~/Dropbox/Classes/Longitudinal Data Analysis")
+wgt <- read.table("weightsbyweek.csv", sep=',', header=TRUE)
+wgtdate <-read.table("weightsbydate.csv", sep=',', header=TRUE)
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(ggplot2)
+library(abind)
+@
+
+\section{Question 1}
+
+<<tidy=TRUE>>=
+#wide to long
+wide_to_long <- wgt %>%
+gather(w_0:w_40, key="week", value="weight")
+wide_to_long
+
+#order by ID and get rid of w_
+wide_to_long2 <- wide_to_long %>%
+  separate(week, into = c("omit", "week"), sep = "_", convert = TRUE) %>%
+  select (-omit) %>%
+  arrange(ID)
+wide_to_long2
+
+#to transfer date to long
+long.date <- wgtdate %>%
+  gather(-ID, -h_0, key= "time", value = "value") %>%
+  separate(time, into = c("variable", "wave")) %>%
+  spread(variable, value) %>%
+  arrange(ID)
+long.date
+
+#needed to insert fake first 3 dates. Also, values are beginning of the week. Weights took place
+#throughout the week, but exact dates were not recorded in the spreadsheet
+
+#to go from long to wide
+long_to_wide <- wide_to_long2 %>%
+  spread (week, weight)
+long_to_wide
+@
+
+\section{Question 3}
+
+<<tidy=TRUE>>=
+colSums(!is.na(wgt))
+@
+
+\section{Question 4}
+
+<<tidy=TRUE>>=
+long.date$d <- as.Date(long.date$d, format='%m/%d/%y')
+startdate <- as.Date("2015-02-09")
+long.date$NumDays <- difftime(long.date$d, startdate, units="days")
+long.date
+@
+
+\section{Question 5}
+
+<<tidy=TRUE>>=
+sapply(long.date, mode)
+long.date <- transform(long.date, wave=as.numeric(wave), w=as.numeric(w))
+long.date <- arrange(long.date, ID, wave)
+#having trouble getting in correct order to graph
+gg1 <-ggplot(long.date, aes(x=wave, y=w, group=ID)) + geom_point()
+print(gg1)
+#Bywave
+gg2 <- ggplot(long.date, aes(x=wave, y=w, group=ID)) + geom_line()
+print(gg2)
+#Byday
+gg3 <- ggplot(long.date, aes(x=NumDays, y=w, group=ID)) + geom_line()
+print(gg3)
+@
+
+\section{Question 6}
+
+<<tidy=TRUE>>=
+gg4 <-gg2 + aes(colour=factor(ID)) + guides(colour=FALSE)
+gg4
+
+gg5 <-gg1 <-ggplot(long.date, aes(x=wave, y=w)) + geom_point(size=.01) + stat_smooth(colour='red')
+gg5
+
+gg6 <-gg1 <-ggplot(long.date, aes(x=wave, y=w)) + geom_point(size=.01) + stat_smooth(method="lm", colour='blue')
+gg6
+@
+
+\section{Question 7}
+
+<<tidy=TRUE>>=
+cor(wgt, use="pairwise.complete.obs", method="pearson")
+@
+
+\end{document}
