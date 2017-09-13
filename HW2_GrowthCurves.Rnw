@@ -1,0 +1,166 @@
+\documentclass{article}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+
+\begin{document}
+
+\title{Growth Curves\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{9/14/17}
+
+<<tidy=TRUE>>=
+setwd("~/Dropbox/Classes/Longitudinal Data Analysis")
+wgt <-read.table("weightslong.csv", sep=',', header=TRUE)
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(ggplot2)
+library(lme4)
+@
+
+\section{Question 1}
+
+\textbf{\large{\textit{
+Run linear models on all of your subjects (a basic regression). What is the average intercept, the average slope?
+}}}
+
+<<tidy=TRUE>>=
+colnames(wgt)[3] <- "week"
+regression <- lm(weight~week, data=wgt)
+summary(regression)
+@
+
+\textbf{\large{\textit{
+The average intercept is 234.7, which is the average weight of all individuals across time. 
+The average slope is -.798, which is the average weight loss per week across participants. 
+}}}
+
+\section{Question 2}
+
+\textbf{\large{\textit{
+Now run a mlm/lmer model with only a random intercept. What is the ICC? What does residual variance look like
+compared to linear model? Create a graph to show this effect.
+}}}
+
+<<tidy=TRUE>>=
+model1 <- lmer(weight~ 1+ (1|ID), data=wgt)
+summary(model1)
+ICC <- 2456/(2465+89.98)
+ICC
+#much more variance between than within people 
+#The residual variance in the hierarchical model is much smaller
+library(sjPlot)
+sjp.lmer(model1, facet.grid = FALSE, 
+          sort = "sort.all")
+#NOTE: can't get SJP package to load right
+@
+
+\section{Question 3}
+
+\textbf{\large{\textit{
+Introduce a fixed slope term. What is the difference in terms of the fixed effects estimates between this estimate and the previous? Of the residual standard error? Create a graph to show both fixed effects estimates and the CIs around them.
+}}}
+
+<<tidy=TRUE>>=
+model2 <- lmer(weight~ 1+ week + (1|ID), data=wgt)
+summary(model2)
+summary(model1)
+gg <- ggplot(wgt, aes(x = week, y = weight, group = ID)) +  geom_point() + stat_smooth(method = "lm")
+gg
+@
+\textbf{\large{\textit{
+In this model, the intercept increased. There is also now a "week" fixed effect. The residual of the random effects decreased substantially.
+}}}
+
+
+\section{Question 4}
+
+\textbf{\large{\textit{
+Run an additional model with a random slope. How does this change compare to the previous model? Should you keep the random slope or not?
+}}}
+
+<<tidy=TRUE>>=
+model3 <- lmer(weight~ 1+ week + (1+week|ID), data=wgt)
+summary(model3)
+summary(model2)
+anova(model2, model3)
+@
+
+\textbf{\large{\textit{
+Adding week as a random effect reduces the residual of the random effect, although it also reduces the effect of the fixed effect. This is because some of the weekly variance is now being explained within person. It is beneficial to the model to keep the random slope in.
+}}}
+
+\section{Question 5}
+
+\textbf{\large{\textit{
+Interpret the correlation between the slope and the intercept.
+}}}
+
+\textbf{\large{\textit{
+If an individual's intercept is higher at the beginning of the program than they will lose weight faster
+}}}
+
+\section{Question 6}
+
+\textbf{\large{\textit{
+Create a density plot of the random effects from your final model.
+}}}
+
+<<tidy=TRUE>>=
+library(merTools)
+head(re.sim)
+
+re.sim <-REsim(model3)
+p1.gg <- re.sim %>% 
+  filter(term == "(Intercept)") 
+ggplot(p1.gg, aes(mean)) +
+  geom_density()
+
+p1.gg2 <- re.sim %>% 
+  filter(term == "week") 
+ggplot(p1.gg2, aes(mean)) +
+  geom_density()
+@
+
+
+\section{Question 7}
+
+\textbf{\large{\textit{
+Create a catepilar plot of the random effects. Is there any person that seems odd in terms of a large standard errors around intercept and slope estimates?
+}}}
+
+<<tidy=TRUE>>=
+p1 <- plotREsim(re.sim)
+p1
+@
+
+\textbf{\large{\textit{
+Yes, there a couple that go from 100-200.
+}}}
+
+
+\section{Question 8}
+
+\textbf{\large{\textit{
+Create a plot of the trajectory, along with a spaghetti plot of each person’s individual slope. Set the alpha level (transparency) on the individual slopes to make them easier to see.
+}}}
+
+<<tidy=TRUE>>=
+library(tidyverse)
+gg1<- ggplot(wgt,
+   aes(x = week, y = weight, group = ID)) + geom_line(alpha=.5)
+gg1
+
+gg2 <- ggplot(wgt,
+   aes(x = week, y = weight, group = ID)) + geom_line(alpha=.5) + stat_smooth(method = "lm", se = FALSE,alpha=.1)   
+gg2
+#can't get the smoothed trajectories to lighten
+
+gg3 <- gg2 +  stat_smooth(data = wgt, aes(x = week, y = weight, group=1, colour="red"), method = "lm", size = 2, se=FALSE)
+print(gg3)
+@
+
+
+\end{document}
