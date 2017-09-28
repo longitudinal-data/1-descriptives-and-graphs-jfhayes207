@@ -1,0 +1,266 @@
+\documentclass{article}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+
+\begin{document}
+
+\title{Conditional Predictors\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{9/29/17}
+
+<<tidy=TRUE>>=
+rm(list=ls())
+setwd("~/Dropbox/Classes/Longitudinal Data Analysis")
+wgt <-read.table("weightslong.csv", sep=',', header=TRUE)
+dems <-read.table("agegender.csv", sep=',', header=TRUE)
+dems$age.c<-dems$age-49.094
+data <- merge(wgt, dems, by="ID")
+data$gender[data$gender==1]<-0
+data$gender[data$gender==2]<-1
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(ggplot2)
+library(lme4)
+@
+
+
+\section{Data Overview}
+
+<<tidy=TRUE>>=
+#Unconditional Model
+model1 <- lmer(weight~ 1+ (1|ID), data=data)
+summary(model1)
+#Linear model
+#chose not to center weight because week 0 is a meaningful value and I want to track weight from the beginning of the program
+#over the course of the program. 
+model2 <- lmer(weight~ 1+ wave + (1|ID), data=data)
+summary(model2)
+summary(model1)
+#graph of data
+gg <- ggplot(data, aes(x = wave, y = weight, group = ID)) +  geom_point() 
+gg
+gg2 <- ggplot(data, aes(x = wave, y = weight, group = ID)) +  geom_point() + stat_smooth(method = "lm")
+gg2
+@
+
+\section{Polynomial}
+
+\textbf{\large{\textit{
+Polynomials can be used to model non-linear data.
+Hypothesis: Weight loss in the program is more rapid at the beginning and then levels off
+}}}
+
+<<tidy=TRUE>>=
+#the linear model again
+lin <- lmer(weight ~ 1 + wave + (wave|ID),data=data)
+summary(lin)
+# Avg. weight at baseline is 234 lbs and with each week, weight drops by .59 lbs. 
+#now for quadratic
+quad<-lmer(weight ~ 1 + wave + I(wave^2)+ (1 + wave + I(wave^2)|ID),data=data)
+summary(quad)
+#won't fit properly with quadratic term in random effects. 
+#Also general suggestion for these models is to determine the polynomial terms while holding all else (e.g., 
+#other predictors, random effects) constant. Begin with just two random effects (intercept and slope) and 
+#can determine other potential random effects after addition of static predictors. Additionally, by excluding random
+#effects, a higher priority is placed on the fixed effects, which is generally more consistent with hypotheses than 
+#the random effects. 
+quad2<-lmer(weight ~ 1 + wave + I(wave^2)+ (1 + wave |ID),data=data)
+summary(quad2)
+#Linear component now represents the slop of a line tangent to the growth curve (instantenous rate of change).
+#In this case, weight is declining.
+#Significant positive quadratic term indicates that the decline in weight isn't as fast as time goes on.
+summary(lin)
+#Quadratic reduces residual in random effects and seems to be a better fit
+anova(lin, quad2)
+#It is
+
+#graph with function specified
+f <- function(x) 238.3-1.258*x+0.01936*x^2
+plot <- ggplot(data, aes(wave, weight))+geom_point()+stat_function(fun=f, colour="red")
+plot
+
+#another graph
+gg4 <-ggplot(data, aes(wave, weight))+geom_point()+stat_smooth(method="lm", se=TRUE, fill=NA,
+                formula=y ~ poly(x, 2, raw=TRUE),colour="red")
+gg4
+#appears to work
+
+#graph with saved values in broom 
+library(broom)
+quad.aug <- augment(quad2, data=data)
+quad.gg <- ggplot(quad.aug, aes(x= wave, y = .fitted)) + geom_point() + stat_smooth() 
+quad.gg
+@
+
+<<tidy=TRUE>>=
+#Let's try a cubic!
+#side note: need at least one more data collection point than the individual growth parameters (e.g., a cubic
+#would need at least 5 data collection points)
+cubic<-lmer(weight ~ 1 + wave + I(wave^2)+ I(wave^3) + (1 + wave |ID),data=data)
+summary(cubic)
+#is it better than the quadratic?
+anova(quad2, cubic)
+#appears to be, but perhaps not to the extent that the quadratic was better than the linear
+#harder to interpret
+
+#Graph with saved values
+cubic.aug <- augment(cubic, data=data)
+cubic.gg <- ggplot(cubic.aug, aes(x= wave, y = .fitted)) + geom_point() + stat_smooth() 
+cubic.gg
+#graph with cubic line by ggplot
+gg5 <-ggplot(data, aes(wave, weight))+geom_point()+stat_smooth(method="lm", se=TRUE, fill=NA,
+                formula=y ~ poly(x, 3, raw=TRUE),colour="red")
+gg5
+@
+
+<<tidy=TRUE>>=
+#Add Level 2 predictor - age
+#Addition of static predictors may interact with the shape of the curve. It may be wise to consider static predicotrs
+#when choosing a polynomial function. 
+#centering age to ensure estimates are interpretable at the mean (0 years old not meaningful)
+quad3<-lmer(weight ~ 1 + wave + I(wave^2)+ age.c + wave*age.c + I(wave^2)*age.c + (1 + wave |ID),data=data)
+summary(quad3)
+#wave*age.c is nearly significant. Would signify that rate of weight loss at baseline is significantly influenced by age,
+#such that older people are losing weight faster. Non-significant quadratic means change in growth rate isn't significantly
+#influenced by age
+
+#graph
+sjp.int(quad3, type="eff", p.kr=F, swap.pred = T, mdrt.values="meansd")
+@
+
+\section{Orthagonal Polynomials}
+
+\textbf{\large{\textit{
+Polynomials can have high correlations among higher order terms. Orthogonal polynomials represnt the same effects as raw polynomials, but the correlations among the terms are 0. These are computed by applying a transformation to the raw data. To do this, use the poly function. May want to only consider using when estimation problems are encountered as raw polynomials are easier to interpret and you can control the anchoring of the intercept.
+}}}
+
+<<tidy=TRUE>>=
+#looking at raw polynomials vs. orthogonal
+data$rawp <- poly(data$wave, 2, raw=TRUE)
+data$orth <- poly(data$wave, 2)
+round(cor(data$rawp))
+round(cor(data$orth))
+#modeling with orthogonal polynomials
+poly.rawp <- lmer(weight~rawp+(rawp[,1]|ID), data=data, REML=FALSE)
+summary(poly.rawp)
+poly.orth <- lmer(weight~orth+(orth[,1]|ID), data=data, REML=FALSE)
+summary(poly.orth)
+#Fixed effects are different due to scaling
+#intercept is different for each type of transformation. For orthogonal, intercept is the 
+#average of the fitted values of all the weeks
+#highest order regression coefficient will have identical t-ratio to raw
+@
+
+\section{Spline and Piecewise Functions}
+
+\textbf{\large{\textit{
+Another approach to non-linear data in which the data are fit "locally" in separate regions.
+Regions are defined by nodes, or points at which the curve transitions to a new shape.
+Nodes are typically chosen in advance, either from theory or the shape of the data
+A polynomial of degree "m" wihtin a region requires at least m+2 data point in that region.
+Piecewise linear functions change discontinuously at the nodes. (text care of Mike Strube) 
+Hypothesis: Weight loss in the program is more rapid at the beginning and then levels off. Specifically, weight loss is fastest in the first 12 weeks, then levels off
+}}}
+
+<<tidy=TRUE>>=
+#Taking a look at the non-linearity again
+gg6 <- ggplot(data, aes(x = wave, y = weight, group = ID)) +  geom_point()
+gg6
+gg7 <- ggplot(data,aes(x = wave, y = weight, group = ID)) + geom_line(alpha=.5) 
+gg7
+#can look to see if things are changing at a certain point to identify nodes or can do so based on theory
+#choosing to look at week 12, as recommendations for adults specify 12 weeks of a program of this type
+
+#Defining the nodes
+data$spline1 <- ifelse(test=data$wave > 12, yes=data$wave-12, no=0)
+head(data.frame(wave=data$wave, spline1=data$spline1), n=7)
+#creating the function
+sp1 <-lmer(weight ~ wave + spline1 + (wave|ID), data=data, REML=FALSE)
+summary(sp1)
+#Large t-value, indicating the significance
+#spline fixed effect is positive indicating the slope is less steep than wave coefficient (e.g., weights drop more rapidly
+#in the first 12 weeks than the later part of the program)
+#compare to model without spline to test
+anova(lin,sp1)
+#significantly better fit with the spline in
+
+#graph
+graphdata <- data.frame(weight=sp1@frame$weight, wave=sp1@frame$wave,
+                       pred=model.matrix (sp1) %*% fixef(sp1))
+spline1 <- ggplot (graphdata, aes (x=wave, y=weight)) + geom_point ()
+spline2 <-spline1 + stat_summary(fun.y=mean, geom = "point", size=2, colour="red")
+spline3 <- spline2 + geom_line(aes(y=pred), size = 1.5, colour="blue")
+print(spline3)
+
+#Can test if slopes are different from each other in the different regions
+M_1=matrix(c(0,1,0,
+             0,1,1,
+             0,0,-1),
+           nrow=3,ncol=3,byrow=TRUE)
+rownames(M_1) <- c("Region 1 Slope", "Region 2 Slope", "Region 1 vs. Region 2")
+M_1
+library(multcomp)
+glht_spline <- glht(sp1,linfct=M_1,alternative="two.sided",rhs=0,calpha = univariate_calpha())
+summary(glht_spline)
+confint(glht_spline,calpha = univariate_calpha())
+#slopes different from 0 and different from each other. 
+@
+
+<<tidy=TRUE>>=
+#Let's try two nodes!
+#The recommendation is actually for 12 to 26 sessions.
+#Is there continued weight loss benefit from 12-26?
+#The program was 40 weeks. In this sample, does this additional time help? 
+data$spline1 <- ifelse(test=data$wave > 12, yes=data$wave-12, no=0)
+data$spline2 <- ifelse(test=data$wave > 26, yes=data$wave-26, no=0)
+head(data.frame(wave=data$wave, spline1=data$spline1, spline2=data$spline2), n=30)
+#creating the function
+sp2 <-lmer(weight ~ wave + spline1 + spline2 + (wave|ID), data=data, REML=FALSE)
+summary(sp2)
+#Large t-value for both splines, indicating the significance
+#Both spline fixed effects are positive indicating the slope is less steep than wave coefficient (e.g., weights drop more 
+#rapidly in the first 12 weeks than the later part of the program)
+#compare to model without spline to test
+anova(lin,sp2)
+#significantly better fit with two splines than linear
+anova(sp1,sp2)
+#significanlty better with two splines than 1
+
+#graph with two nodes
+graphdata2 <- data.frame(weight=sp2@frame$weight, wave=sp2@frame$wave,
+                       pred=model.matrix (sp2) %*% fixef(sp2))
+spline4 <- ggplot (graphdata2, aes (x=wave, y=weight)) + geom_point ()
+spline5 <-spline4 + stat_summary(fun.y=mean, geom = "point", size=2, colour="red")
+spline6 <- spline5 + geom_line(aes(y=pred), size = 1.5, colour="blue")
+print(spline6)
+
+#test regions
+M_2=matrix(c(0,1,0,0,
+             0,1,1,0,
+             0,1,1,1,
+             0,0,-1,0,
+             0,0,-1,-1,
+             0,0,0,-1),
+           nrow=6,ncol=4,byrow=TRUE)
+rownames(M_2) <- c("Region 1 Slope", "Region 2 Slope", "Region 3 Slope", "Region 1 vs. Region 2", "Region 1 vs. Region 3",
+                   "Region 2 vs. Region 3")
+M_2
+glht_spline2 <- glht(sp2,linfct=M_2,alternative="two.sided",rhs=0,calpha = univariate_calpha())
+summary(glht_spline2)
+#slopes different from 0 at 12 and from 12-26. After 26, slope not signficantly different from 0. 
+#People continue to see weight loss benefit by 26 weeks; however, after 26, people stop losing weight.
+#All slopes different from each other. 
+#People are losing weight less quickly from 12-26 and from 26-40 than from 0-12.
+#People are losing weight less quickly from 26-40 than they are from 12-26.
+confint(glht_spline2,calpha = univariate_calpha())
+@
+
+\textbf{\large{\textit{
+
+}}}
+
+
+\end{document}
