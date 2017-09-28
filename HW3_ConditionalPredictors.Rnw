@@ -1,0 +1,136 @@
+\documentclass{article}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+
+\begin{document}
+
+\title{Conditional Predictors\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{9/29/17}
+
+<<tidy=TRUE>>=
+setwd("~/Dropbox/Classes/Longitudinal Data Analysis")
+wgt <-read.table("weightslong.csv", sep=',', header=TRUE)
+dems <-read.table("agegender.csv", sep=',', header=TRUE)
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(ggplot2)
+library(lme4)
+@
+
+\section{Question 1}
+
+\textbf{\large{\textit{
+Run a series of models using a time-invariant nominal covariate. a) where the covariate only predicts the intercept b) predicts both intercept and slope c) is rescaled eg centering. For all models, how does your model change from model to model. What is your final model?
+}}}
+
+<<tidy=TRUE>>=
+data <- merge(wgt, dems, by="ID")
+data$gender[data$gender==1]<-0
+data$gender[data$gender==2]<-1
+#a) covariate predicts only intercept
+mod1a<-lmer(weight ~ wave + gender + gender*wave + (1|ID),data=data)
+summary(mod1a)
+#Fixed effects
+#Intercept: baseline male weight: 253.78
+#wave: for every additional week, decrease in weight by .81 for men
+#gender: Females have a baseline weight of 253-21
+#wavebygender: differences in slopes between males and females across time
+
+#b) covariate predicts intercept and slope
+mod1b <-lmer(weight ~ wave + gender + gender*wave + (wave|ID),data=data)
+summary(mod1b)
+#fixed effects don't change much, but variance of the intercept of random effects
+#increases and the residual decreases
+
+#c) centering
+dems$gender[dems$gender==1]<-0
+dems$gender[dems$gender==2]<-1
+mean(dems$age, na.rm=TRUE)
+dems$age.c<-dems$age-49.094
+mean(dems$gender, na.rm=TRUE)
+dems$gender.c <-dems$gender-.892
+data <- merge(wgt, dems, by="ID")
+mod1c <-lmer(weight ~ wave + gender.c + gender.c*wave + (wave|ID),data=data)
+summary(mod1c)
+#Random effects don't change at all. Intercept and wave are different because reference
+#group is now the mean of the genders, not male or female. Gender and interaction don't
+#change because those represent the differences between the groups, which is maintained
+#by the centering.
+@
+
+\textbf{\large{\textit{
+From the intercept only to the intercept and slope model, the fixed effects change slightly and the intercept in the random effects SD increases a bit and the residual decreases. By centering the model, random effects don't change but the intercept and wave of the fixed effects does because it is no longer referencing a male group. Given the coefficients are a bit easier to interpret, I plan to keep the non-centered version.
+}}}
+
+\section{Question 2}
+
+\textbf{\large{\textit{
+Introduce a time-invariant continuous covariate and run models a to c from 1
+}}}
+
+<<tidy=TRUE>>=
+#a) intercept only
+mod2a<-lmer(weight ~ wave + age + age*wave + (1|ID),data=data)
+summary(mod2a)
+#Fixed effects
+#Intercept: baseline weight of someone at age 0?: .0273
+#wave: for every additional week, decrease in weight by .47 for people at age 0?
+#gender: ??
+#wavebygender: ??
+mod2b <-lmer(weight ~ wave + age + age*wave + (wave|ID),data=data)
+summary(mod2b)
+#c) centered
+mod2c <-lmer(weight ~ wave + age.c + age.c*wave + (wave|ID),data=data)
+summary(mod2c)
+#intercept of fixed effects changes quite a bit - now represents the baseline weight 
+#at the mean age of participants. 
+@
+
+\textbf{\large{\textit{
+Will use the centered version with age because better interpretability. 
+}}}
+
+\section{Question 3}
+
+\textbf{\large{\textit{
+Graph both of your final models for the continuous and nominal models above.
+}}}
+
+<<tidy=TRUE>>=
+library(sjPlot)
+sjp.int(mod1b, type = "eff", p.kr=F, swap.pred=T)
+sjp.int(mod2c, type = "eff", p.kr=F, swap.pred=T, mdrt.vaues="meansd")
+@
+
+\section{Question 4}
+
+\textbf{\large{\textit{
+Calculate confidence intervals around your estimates for your final models
+}}}
+
+<<tidy=TRUE>>=
+confint.merMod(mod1b, method="boot", nsim=10)
+confint.merMod(mod2c, method="boot", nsim=10)
+#did 500 because taking too long- would do 5000 if doing for real 
+@
+
+\section{Question 5}
+
+\textbf{\large{\textit{
+Include both types of covariates in a single model. How does your interpretation of parameters change?
+}}}
+
+<<tidy=TRUE>>=
+mod3a <-lmer(weight ~ wave + age.c + gender + age.c*wave + gender*wave + age.c*gender + (wave|ID),data=data)
+summary(mod3a)
+@
+
+\textbf{\large{\textit{
+The coefficients now need to be interpreted for males at baseline at the mean age of the sample. For example, the fixed effects intercept shows males at the mean age have a weight of 254.9 at baseline. Males at the mean age will decrease by .79 pounds each week. Women at the mean age have a weight that is 23 pounds lower than men at the mean age at baseline. For men, as age increases each year from the mean, weight at baseline decreases by .42.
+}}}
+
+\end{document}
