@@ -128,6 +128,7 @@ summary(quad3)
 #influenced by age
 
 #graph
+library(sjPlot)
 sjp.int(quad3, type="eff", p.kr=F, swap.pred = T, mdrt.values="meansd")
 @
 
@@ -172,7 +173,7 @@ gg6
 gg7 <- ggplot(data,aes(x = wave, y = weight, group = ID)) + geom_line(alpha=.5) 
 gg7
 #can look to see if things are changing at a certain point to identify nodes or can do so based on theory
-#choosing to look at week 12, as recommendations for adults specify 12 weeks of a program of this type
+#choosing to look at week 12, as recommendations for adults specify at least 12 weeks of a program of this type
 
 #Defining the nodes
 data$spline1 <- ifelse(test=data$wave > 12, yes=data$wave-12, no=0)
