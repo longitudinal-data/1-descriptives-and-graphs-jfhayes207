@@ -1,0 +1,233 @@
+\documentclass{article}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+
+\begin{document}
+
+\title{Plotting and Time-Varying Covariates\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{10/5/17}
+
+<<tidy=TRUE>>=
+rm(list=ls())
+setwd("~/Dropbox/Classes/Longitudinal Data Analysis")
+wgt <-read.table("weightslong.csv", sep=',', header=TRUE)
+dems <-read.table("agegender.csv", sep=',', header=TRUE)
+plan <- read.table("plandiet.csv", sep=',', header=TRUE)
+dems$age.c<-dems$age-49.094
+data <- merge(wgt, dems, by="ID")
+data <- join(data, plan, by=c("ID","wave"))
+data$gender[data$gender==1]<-0
+data$gender[data$gender==2]<-1
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(ggplot2)
+library(lme4)
+library(reghelper)
+library(MuMIn)
+@
+
+\section{Graphing with Categorical Level 2 Predictors}
+
+<<tidy=TRUE>>=
+#model with gender as a Level 2 predictor
+mod1b <-lmer(weight ~ wave + gender + gender*wave + (wave|ID),data=data)
+summary(mod1b)
+
+#plotting categorical predictors using the predict function
+fixed.frame <- 
+  data.frame(expand.grid(wave = seq(0,40,1), 
+             gender = c(0,1))) %>%
+  mutate(pred = predict(mod1b, newdata = ., re.form = NA))
+
+fixed.frame %>%
+  mutate(Gender = factor(gender, levels = c(0,1), labels = c("Male", "Female"))) %>%
+  ggplot(aes(x = wave, y = pred, colour=Gender)) +
+    geom_line(size = 1) + 
+    lims(y = c(190,275)) +
+    labs(x = "Week", y = "Weight Predicted Values",
+         title = "Gender by Time Invariant Conditional Growth Models") +
+    theme_classic() +
+    theme(axis.text = element_text(face = "bold", size = rel(1.2)),
+          axis.title = element_text(face = "bold", size = rel(1.2)),
+          legend.title = element_text(face = "bold", size = rel(1.2)),
+          plot.title = element_text(face = "bold", size = rel(1.2), hjust = .5))
+@
+
+\section{Graphing with Continuous Level 2 Predictors}
+
+<<tidy=TRUE>>=
+#model with age as a continuous predictor
+mod2c <-lmer(weight ~ wave + age.c + age.c*wave + (wave|ID),data=data)
+summary(mod2c)
+
+#graph of continuous predictors using the predict function
+fixed.frame <- data %>%
+  summarise(mean = mean(age.c, na.rm = T), 
+            sd = sd(age.c, na.rm = T))
+
+fixed.frame <- 
+  data.frame(
+    expand.grid(
+      # here, you add values for your time variable and predictors
+      wave = seq(0,40,1), 
+      age.c = c(fixed.frame$mean-fixed.frame$sd,
+                     fixed.frame$mean,
+                     fixed.frame$mean+fixed.frame$sd))) %>%
+  mutate(pred = predict(mod2c, newdata = ., re.form = NA))
+
+
+fixed.frame %>%
+  mutate(Age = factor(age.c, levels = unique(age.c), labels = c("-1SD", "0SD", "1SD"))) %>%
+  ggplot(aes(x = wave, y = pred, color = Age)) +
+    geom_line(size = 2) + 
+    lims(y = c(175,250)) +
+    labs(x = "week", y = "Weight Composite",
+         title = "Continuous Invariant Conditional Growth Models") +
+    theme_classic() +
+    theme(axis.text = element_text(face = "bold", size = rel(1.2)),
+          axis.title = element_text(face = "bold", size = rel(1.2)),
+          legend.title = element_text(face = "bold", size = rel(1.2)),
+          plot.title = element_text(face = "bold", size = rel(1.2), hjust = .5))
+@
+
+\section{Making a Table}
+
+<<tidy=TRUE>>=
+## here's some code to make a table. You shouldn't need to modify anything here 
+# unless you add additional random effects terms
+## fixed effects first ##
+table_fun <- function(model){
+  fixed <- broom::tidy(model) %>% filter(group == "fixed") %>%
+    select(term, estimate) 
+  ## add random effects ##
+  rand <- broom::tidy(model) %>% filter(group != "fixed") %>%
+    select(term, estimate)
+  ## get confidence intervals ##
+  CI <- data.frame(confint.merMod(model, method = "boot", nsim = 10)) %>%
+    mutate(term = rownames(.)) %>% setNames(c("lower", "upper", "term"))
+  
+  ## Get ICC & R2 values ##
+  ICC <- reghelper::ICC(model)
+  R2 <- MuMIn::r.squaredGLMM(model)
+  
+  ## format the fixed effects
+  fixed <- fixed %>% left_join(CI %>% filter(!grepl(".sig", term))) %>%
+    mutate(type = "Fixed Parts")
+  
+  rand <- rand %>%
+    mutate(estimate = ifelse(grepl("cor", term) == T, estimate, estimate^2),
+          term = mapvalues(term, unique(term), 
+           c("$\\tau_{00}$", "$\\tau_{11}$", "$\\tau_{10}$", "$\\hat{\\sigma^2}$"))) %>%
+    left_join(
+      CI %>% filter(grepl(".sig", term)) %>%
+        mutate(term = mapvalues(term, unique(term), 
+            c("$\\tau_{00}$", "$\\tau_{10}$", "$\\tau_{11}$", "$\\hat{\\sigma^2}$")),
+            lower = lower^2, upper = upper^2)) %>%
+    mutate(type = "Random Parts")
+  
+  mod_terms <- tribble(
+    ~term, ~estimate, ~type,
+    "ICC", ICC, "Model Terms",
+    "$R^2_m$", R2[1], "Model Terms",
+    "$R^2_c$", R2[2], "Model Terms"
+  )
+  
+  tab <- fixed %>%
+    full_join(rand) %>%
+    mutate(CI = sprintf("(%.2f, %.2f)", lower, upper)) %>%
+    select(-lower, -upper) %>%
+    full_join(mod_terms) %>%
+    mutate(estimate = sprintf("%.2f", estimate)) %>%
+    dplyr::rename(b = estimate) %>%
+    select(type, everything())
+  return(tab)
+}
+# you can use this with papaja and the apa_table function pretty easily
+# the trick is that if you are not using the papaja template, the proper
+# LaTeX packages may not be loaded. You can get around this by attaching
+# a .tex file calling the packages under "in_header: header.tex" in your YAML
+# header the YAML header of this .Rmd file contains the necessary syntax and 
+# the header.tex file with the proper packages
+
+tab <- table_fun(mod2c)
+@
+
+\section{Time-Varying Covariate: Continuous (don't have any categorical)}
+
+<<tidy=TRUE>>=
+#adding planning diet as main effect (question 13)
+modTV1 <- lmer(weight ~ wave + plans + (wave|ID), data = data)
+summary(modTV1)
+
+fixed.frame <- data %>%
+  summarise(mean = mean(plans, na.rm = T), 
+            sd = sd(plans, na.rm = T))
+
+fixed.frame <- 
+  data.frame(
+    expand.grid(
+      # here, you add values for your time variable and predictors
+      wave = seq(0,40,1), 
+      plans = c(fixed.frame$mean-fixed.frame$sd,
+                     fixed.frame$mean,
+                     fixed.frame$mean+fixed.frame$sd))) %>%
+  mutate(pred = predict(modTV1, newdata = ., re.form = NA))
+
+
+fixed.frame %>%
+  mutate(Plan = factor(plans, levels = unique(plans), labels = c("-1SD", "0SD", "1SD"))) %>%
+  ggplot(aes(x = wave, y = pred, color = Plan)) +
+    geom_line(size = 2) + 
+    lims(y = c(200,250)) +
+    labs(x = "week", y = "Weight Composite",
+         title = "Continuous Invariant Conditional Growth Models") +
+    theme_classic() +
+    theme(axis.text = element_text(face = "bold", size = rel(1.2)),
+          axis.title = element_text(face = "bold", size = rel(1.2)),
+          legend.title = element_text(face = "bold", size = rel(1.2)),
+          plot.title = element_text(face = "bold", size = rel(1.2), hjust = .5))
+@
+
+\section{Time-Varying Covariate with interaction: Continuous (don't have any categorical)}
+
+<<tidy=TRUE>>=
+#adding interaction
+modTV2 <- lmer(weight ~ wave + plans + wave:plans + (wave|ID), data = data)
+summary(modTV2)
+#interaction not significant
+#planning does not moderate the time course of weight loss
+
+fixed.frame <- data %>%
+  summarise(mean = mean(plans, na.rm = T), 
+            sd = sd(plans, na.rm = T))
+
+fixed.frame <- 
+  data.frame(
+    expand.grid(
+      # here, you add values for your time variable and predictors
+      wave = seq(0,40,1), 
+      plans = c(fixed.frame$mean-fixed.frame$sd,
+                     fixed.frame$mean,
+                     fixed.frame$mean+fixed.frame$sd))) %>%
+  mutate(pred = predict(modTV2, newdata = ., re.form = NA))
+
+
+fixed.frame %>%
+  mutate(Plan = factor(plans, levels = unique(plans), labels = c("-1SD", "0SD", "1SD"))) %>%
+  ggplot(aes(x = wave, y = pred, color = Plan)) +
+    geom_line(size = 2) + 
+    lims(y = c(200,250)) +
+    labs(x = "week", y = "Weight Composite",
+         title = "Continuous Invariant Conditional Growth Models") +
+    theme_classic() +
+    theme(axis.text = element_text(face = "bold", size = rel(1.2)),
+          axis.title = element_text(face = "bold", size = rel(1.2)),
+          legend.title = element_text(face = "bold", size = rel(1.2)),
+          plot.title = element_text(face = "bold", size = rel(1.2), hjust = .5))
+@
+
+\end{document}

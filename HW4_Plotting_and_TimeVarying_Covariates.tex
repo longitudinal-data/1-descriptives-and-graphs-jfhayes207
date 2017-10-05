@@ -1,0 +1,475 @@
+\documentclass{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+\title{Plotting and Time-Varying Covariates\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{10/5/17}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{rm}\hlstd{(}\hlkwc{list} \hlstd{=} \hlkwd{ls}\hlstd{())}
+\hlkwd{setwd}\hlstd{(}\hlstr{"~/Dropbox/Classes/Longitudinal Data Analysis"}\hlstd{)}
+\hlstd{wgt} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"weightslong.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{dems} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"agegender.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{plan} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"plandiet.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{dems}\hlopt{$}\hlstd{age.c} \hlkwb{<-} \hlstd{dems}\hlopt{$}\hlstd{age} \hlopt{-} \hlnum{49.094}
+\hlstd{data} \hlkwb{<-} \hlkwd{merge}\hlstd{(wgt, dems,} \hlkwc{by} \hlstd{=} \hlstr{"ID"}\hlstd{)}
+\hlstd{data} \hlkwb{<-} \hlkwd{join}\hlstd{(data, plan,} \hlkwc{by} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"ID"}\hlstd{,} \hlstr{"wave"}\hlstd{))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): could not find function "{}join"{}}}\begin{alltt}
+\hlstd{data}\hlopt{$}\hlstd{gender[data}\hlopt{$}\hlstd{gender} \hlopt{==} \hlnum{1}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{data}\hlopt{$}\hlstd{gender[data}\hlopt{$}\hlstd{gender} \hlopt{==} \hlnum{2}\hlstd{]} \hlkwb{<-} \hlnum{1}
+\hlkwd{library}\hlstd{(tidyr)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'tidyr' was built under R version 3.3.2}}\begin{alltt}
+\hlkwd{library}\hlstd{(dplyr)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'dplyr' was built under R version 3.3.2}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'dplyr'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following objects are masked from 'package:stats':\\\#\# \\\#\#\ \ \ \  filter, lag}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following objects are masked from 'package:base':\\\#\# \\\#\#\ \ \ \  intersect, setdiff, setequal, union}}\begin{alltt}
+\hlkwd{library}\hlstd{(plyr)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# -------------------------------------------------------------------------}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# You have loaded plyr after dplyr - this is likely to cause problems.\\\#\# If you need functions from both plyr and dplyr, please load plyr first, then dplyr:\\\#\# library(plyr); library(dplyr)}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# -------------------------------------------------------------------------}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'plyr'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following objects are masked from 'package:dplyr':\\\#\# \\\#\#\ \ \ \  arrange, count, desc, failwith, id, mutate, rename, summarise,\\\#\#\ \ \ \  summarize}}\begin{alltt}
+\hlkwd{library}\hlstd{(lubridate)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'lubridate'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:plyr':\\\#\# \\\#\#\ \ \ \  here}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:base':\\\#\# \\\#\#\ \ \ \  date}}\begin{alltt}
+\hlkwd{library}\hlstd{(ggplot2)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'ggplot2' was built under R version 3.3.2}}\begin{alltt}
+\hlkwd{library}\hlstd{(lme4)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: Matrix}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'Matrix'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:tidyr':\\\#\# \\\#\#\ \ \ \  expand}}\begin{alltt}
+\hlkwd{library}\hlstd{(reghelper)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'reghelper' was built under R version 3.3.2}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'reghelper'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:base':\\\#\# \\\#\#\ \ \ \  beta}}\begin{alltt}
+\hlkwd{library}\hlstd{(MuMIn)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'MuMIn' was built under R version 3.3.2}}\end{kframe}
+\end{knitrout}
+
+\section{Graphing with Categorical Level 2 Predictors}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# model with gender as a Level 2 predictor}
+\hlstd{mod1b} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlstd{wave} \hlopt{+} \hlstd{gender} \hlopt{+} \hlstd{gender} \hlopt{*} \hlstd{wave} \hlopt{+} \hlstd{(wave} \hlopt{|} \hlstd{ID),} \hlkwc{data} \hlstd{= data)}
+\hlkwd{summary}\hlstd{(mod1b)}
+\end{alltt}
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: weight ~ wave + gender + gender * wave + (wave | ID)
+##    Data: data
+## 
+## REML criterion at convergence: 23120.2
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -5.6273 -0.5696 -0.0630  0.4844  5.2610 
+## 
+## Random effects:
+##  Groups   Name        Variance  Std.Dev. Corr 
+##  ID       (Intercept) 2512.2950 50.1228       
+##           wave           0.1655  0.4068  -0.20
+##  Residual               14.4695  3.8039       
+## Number of obs: 3900, groups:  ID, 139
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept) 253.7208    12.9461  19.598
+## wave         -0.8067     0.1064  -7.583
+## gender      -21.6634    13.7068  -1.580
+## wave:gender   0.2481     0.1130   2.195
+## 
+## Correlation of Fixed Effects:
+##             (Intr) wave   gender
+## wave        -0.201              
+## gender      -0.944  0.190       
+## wave:gender  0.189 -0.941 -0.200
+\end{verbatim}
+\begin{alltt}
+\hlcom{# plotting categorical predictors using the predict function}
+\hlstd{fixed.frame} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwd{expand.grid}\hlstd{(}\hlkwc{wave} \hlstd{=} \hlkwd{seq}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{40}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{gender} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{)))} \hlopt{%>%}
+    \hlkwd{mutate}\hlstd{(}\hlkwc{pred} \hlstd{=} \hlkwd{predict}\hlstd{(mod1b,} \hlkwc{newdata} \hlstd{= .,} \hlkwc{re.form} \hlstd{=} \hlnum{NA}\hlstd{))}
+
+\hlstd{fixed.frame} \hlopt{%>%} \hlkwd{mutate}\hlstd{(}\hlkwc{Gender} \hlstd{=} \hlkwd{factor}\hlstd{(gender,} \hlkwc{levels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"Male"}\hlstd{,}
+    \hlstr{"Female"}\hlstd{)))} \hlopt{%>%} \hlkwd{ggplot}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= wave,} \hlkwc{y} \hlstd{= pred,} \hlkwc{colour} \hlstd{= Gender))} \hlopt{+} \hlkwd{geom_line}\hlstd{(}\hlkwc{size} \hlstd{=} \hlnum{1}\hlstd{)} \hlopt{+}
+    \hlkwd{lims}\hlstd{(}\hlkwc{y} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{190}\hlstd{,} \hlnum{275}\hlstd{))} \hlopt{+} \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{"Week"}\hlstd{,} \hlkwc{y} \hlstd{=} \hlstr{"Weight Predicted Values"}\hlstd{,}
+    \hlkwc{title} \hlstd{=} \hlstr{"Gender by Time Invariant Conditional Growth Models"}\hlstd{)} \hlopt{+} \hlkwd{theme_classic}\hlstd{()} \hlopt{+}
+    \hlkwd{theme}\hlstd{(}\hlkwc{axis.text} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),} \hlkwc{axis.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,}
+        \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),} \hlkwc{legend.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+        \hlkwc{plot.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{),} \hlkwc{hjust} \hlstd{=} \hlnum{0.5}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-2-1} 
+
+\end{knitrout}
+
+\section{Graphing with Continuous Level 2 Predictors}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#model with age as a continuous predictor}
+\hlstd{mod2c} \hlkwb{<-}\hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlstd{wave} \hlopt{+} \hlstd{age.c} \hlopt{+} \hlstd{age.c}\hlopt{*}\hlstd{wave} \hlopt{+} \hlstd{(wave}\hlopt{|}\hlstd{ID),}\hlkwc{data}\hlstd{=data)}
+\hlkwd{summary}\hlstd{(mod2c)}
+\end{alltt}
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: weight ~ wave + age.c + age.c * wave + (wave | ID)
+##    Data: data
+## 
+## REML criterion at convergence: 23131.3
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -5.6268 -0.5666 -0.0638  0.4828  5.2589 
+## 
+## Random effects:
+##  Groups   Name        Variance  Std.Dev. Corr 
+##  ID       (Intercept) 2498.7452 49.9875       
+##           wave           0.1677  0.4095  -0.25
+##  Residual               14.4677  3.8036       
+## Number of obs: 3900, groups:  ID, 139
+## 
+## Fixed effects:
+##               Estimate Std. Error t value
+## (Intercept) 234.391903   4.241540   55.26
+## wave         -0.584635   0.036183  -16.16
+## age.c        -0.761723   0.421352   -1.81
+## wave:age.c   -0.006835   0.003614   -1.89
+## 
+## Correlation of Fixed Effects:
+##            (Intr) wave   age.c 
+## wave       -0.249              
+## age.c       0.000  0.001       
+## wave:age.c  0.001 -0.035 -0.248
+\end{verbatim}
+\begin{alltt}
+\hlcom{#graph of continuous predictors using the predict function}
+\hlstd{fixed.frame} \hlkwb{<-} \hlstd{data} \hlopt{%>%}
+  \hlkwd{summarise}\hlstd{(}\hlkwc{mean} \hlstd{=} \hlkwd{mean}\hlstd{(age.c,} \hlkwc{na.rm} \hlstd{= T),}
+            \hlkwc{sd} \hlstd{=} \hlkwd{sd}\hlstd{(age.c,} \hlkwc{na.rm} \hlstd{= T))}
+
+\hlstd{fixed.frame} \hlkwb{<-}
+  \hlkwd{data.frame}\hlstd{(}
+    \hlkwd{expand.grid}\hlstd{(}
+      \hlcom{# here, you add values for your time variable and predictors}
+      \hlkwc{wave} \hlstd{=} \hlkwd{seq}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{40}\hlstd{,}\hlnum{1}\hlstd{),}
+      \hlkwc{age.c} \hlstd{=} \hlkwd{c}\hlstd{(fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{-}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd,}
+                     \hlstd{fixed.frame}\hlopt{$}\hlstd{mean,}
+                     \hlstd{fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{+}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd)))} \hlopt{%>%}
+  \hlkwd{mutate}\hlstd{(}\hlkwc{pred} \hlstd{=} \hlkwd{predict}\hlstd{(mod2c,} \hlkwc{newdata} \hlstd{= .,} \hlkwc{re.form} \hlstd{=} \hlnum{NA}\hlstd{))}
+
+
+\hlstd{fixed.frame} \hlopt{%>%}
+  \hlkwd{mutate}\hlstd{(}\hlkwc{Age} \hlstd{=} \hlkwd{factor}\hlstd{(age.c,} \hlkwc{levels} \hlstd{=} \hlkwd{unique}\hlstd{(age.c),} \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"-1SD"}\hlstd{,} \hlstr{"0SD"}\hlstd{,} \hlstr{"1SD"}\hlstd{)))} \hlopt{%>%}
+  \hlkwd{ggplot}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= wave,} \hlkwc{y} \hlstd{= pred,} \hlkwc{color} \hlstd{= Age))} \hlopt{+}
+    \hlkwd{geom_line}\hlstd{(}\hlkwc{size} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
+    \hlkwd{lims}\hlstd{(}\hlkwc{y} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{175}\hlstd{,}\hlnum{250}\hlstd{))} \hlopt{+}
+    \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{"week"}\hlstd{,} \hlkwc{y} \hlstd{=} \hlstr{"Weight Composite"}\hlstd{,}
+         \hlkwc{title} \hlstd{=} \hlstr{"Continuous Invariant Conditional Growth Models"}\hlstd{)} \hlopt{+}
+    \hlkwd{theme_classic}\hlstd{()} \hlopt{+}
+    \hlkwd{theme}\hlstd{(}\hlkwc{axis.text} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{axis.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{legend.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{plot.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{),} \hlkwc{hjust} \hlstd{=} \hlnum{.5}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-3-1} 
+
+\end{knitrout}
+
+\section{Making a Table}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{## here's some code to make a table. You shouldn't need to modify anything}
+\hlcom{## here unless you add additional random effects terms fixed effects first ##}
+\hlstd{table_fun} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{model}\hlstd{) \{}
+    \hlstd{fixed} \hlkwb{<-} \hlstd{broom}\hlopt{::}\hlkwd{tidy}\hlstd{(model)} \hlopt{%>%} \hlkwd{filter}\hlstd{(group} \hlopt{==} \hlstr{"fixed"}\hlstd{)} \hlopt{%>%} \hlkwd{select}\hlstd{(term,}
+        \hlstd{estimate)}
+    \hlcom{## add random effects ##}
+    \hlstd{rand} \hlkwb{<-} \hlstd{broom}\hlopt{::}\hlkwd{tidy}\hlstd{(model)} \hlopt{%>%} \hlkwd{filter}\hlstd{(group} \hlopt{!=} \hlstr{"fixed"}\hlstd{)} \hlopt{%>%} \hlkwd{select}\hlstd{(term,}
+        \hlstd{estimate)}
+    \hlcom{## get confidence intervals ##}
+    \hlstd{CI} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwd{confint.merMod}\hlstd{(model,} \hlkwc{method} \hlstd{=} \hlstr{"boot"}\hlstd{,} \hlkwc{nsim} \hlstd{=} \hlnum{10}\hlstd{))} \hlopt{%>%}
+        \hlkwd{mutate}\hlstd{(}\hlkwc{term} \hlstd{=} \hlkwd{rownames}\hlstd{(.))} \hlopt{%>%} \hlkwd{setNames}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{"lower"}\hlstd{,} \hlstr{"upper"}\hlstd{,} \hlstr{"term"}\hlstd{))}
+
+    \hlcom{## Get ICC & R2 values ##}
+    \hlstd{ICC} \hlkwb{<-} \hlstd{reghelper}\hlopt{::}\hlkwd{ICC}\hlstd{(model)}
+    \hlstd{R2} \hlkwb{<-} \hlstd{MuMIn}\hlopt{::}\hlkwd{r.squaredGLMM}\hlstd{(model)}
+
+    \hlcom{## format the fixed effects}
+    \hlstd{fixed} \hlkwb{<-} \hlstd{fixed} \hlopt{%>%} \hlkwd{left_join}\hlstd{(CI} \hlopt{%>%} \hlkwd{filter}\hlstd{(}\hlopt{!}\hlkwd{grepl}\hlstd{(}\hlstr{".sig"}\hlstd{, term)))} \hlopt{%>%} \hlkwd{mutate}\hlstd{(}\hlkwc{type} \hlstd{=} \hlstr{"Fixed Parts"}\hlstd{)}
+
+    \hlstd{rand} \hlkwb{<-} \hlstd{rand} \hlopt{%>%} \hlkwd{mutate}\hlstd{(}\hlkwc{estimate} \hlstd{=} \hlkwd{ifelse}\hlstd{(}\hlkwd{grepl}\hlstd{(}\hlstr{"cor"}\hlstd{, term)} \hlopt{==} \hlstd{T, estimate,}
+        \hlstd{estimate}\hlopt{^}\hlnum{2}\hlstd{),} \hlkwc{term} \hlstd{=} \hlkwd{mapvalues}\hlstd{(term,} \hlkwd{unique}\hlstd{(term),} \hlkwd{c}\hlstd{(}\hlstr{"$\textbackslash{}\textbackslash{}tau_\{00\}$"}\hlstd{,}
+        \hlstr{"$\textbackslash{}\textbackslash{}tau_\{11\}$"}\hlstd{,} \hlstr{"$\textbackslash{}\textbackslash{}tau_\{10\}$"}\hlstd{,} \hlstr{"$\textbackslash{}\textbackslash{}hat\{\textbackslash{}\textbackslash{}sigma^2\}$"}\hlstd{)))} \hlopt{%>%} \hlkwd{left_join}\hlstd{(CI} \hlopt{%>%}
+        \hlkwd{filter}\hlstd{(}\hlkwd{grepl}\hlstd{(}\hlstr{".sig"}\hlstd{, term))} \hlopt{%>%} \hlkwd{mutate}\hlstd{(}\hlkwc{term} \hlstd{=} \hlkwd{mapvalues}\hlstd{(term,} \hlkwd{unique}\hlstd{(term),}
+        \hlkwd{c}\hlstd{(}\hlstr{"$\textbackslash{}\textbackslash{}tau_\{00\}$"}\hlstd{,} \hlstr{"$\textbackslash{}\textbackslash{}tau_\{10\}$"}\hlstd{,} \hlstr{"$\textbackslash{}\textbackslash{}tau_\{11\}$"}\hlstd{,} \hlstr{"$\textbackslash{}\textbackslash{}hat\{\textbackslash{}\textbackslash{}sigma^2\}$"}\hlstd{)),}
+        \hlkwc{lower} \hlstd{= lower}\hlopt{^}\hlnum{2}\hlstd{,} \hlkwc{upper} \hlstd{= upper}\hlopt{^}\hlnum{2}\hlstd{))} \hlopt{%>%} \hlkwd{mutate}\hlstd{(}\hlkwc{type} \hlstd{=} \hlstr{"Random Parts"}\hlstd{)}
+
+    \hlstd{mod_terms} \hlkwb{<-} \hlkwd{tribble}\hlstd{(}\hlopt{~}\hlstd{term,} \hlopt{~}\hlstd{estimate,} \hlopt{~}\hlstd{type,} \hlstr{"ICC"}\hlstd{, ICC,} \hlstr{"Model Terms"}\hlstd{,}
+        \hlstr{"$R^2_m$"}\hlstd{, R2[}\hlnum{1}\hlstd{],} \hlstr{"Model Terms"}\hlstd{,} \hlstr{"$R^2_c$"}\hlstd{, R2[}\hlnum{2}\hlstd{],} \hlstr{"Model Terms"}\hlstd{)}
+
+    \hlstd{tab} \hlkwb{<-} \hlstd{fixed} \hlopt{%>%} \hlkwd{full_join}\hlstd{(rand)} \hlopt{%>%} \hlkwd{mutate}\hlstd{(}\hlkwc{CI} \hlstd{=} \hlkwd{sprintf}\hlstd{(}\hlstr{"(%.2f, %.2f)"}\hlstd{,}
+        \hlstd{lower, upper))} \hlopt{%>%} \hlkwd{select}\hlstd{(}\hlopt{-}\hlstd{lower,} \hlopt{-}\hlstd{upper)} \hlopt{%>%} \hlkwd{full_join}\hlstd{(mod_terms)} \hlopt{%>%}
+        \hlkwd{mutate}\hlstd{(}\hlkwc{estimate} \hlstd{=} \hlkwd{sprintf}\hlstd{(}\hlstr{"%.2f"}\hlstd{, estimate))} \hlopt{%>%} \hlstd{dplyr}\hlopt{::}\hlkwd{rename}\hlstd{(}\hlkwc{b} \hlstd{= estimate)} \hlopt{%>%}
+        \hlkwd{select}\hlstd{(type,} \hlkwd{everything}\hlstd{())}
+    \hlkwd{return}\hlstd{(tab)}
+\hlstd{\}}
+\hlcom{# you can use this with papaja and the apa_table function pretty easily the}
+\hlcom{# trick is that if you are not using the papaja template, the proper LaTeX}
+\hlcom{# packages may not be loaded. You can get around this by attaching a .tex}
+\hlcom{# file calling the packages under 'in_header: header.tex' in your YAML}
+\hlcom{# header the YAML header of this .Rmd file contains the necessary syntax and}
+\hlcom{# the header.tex file with the proper packages}
+
+\hlstd{tab} \hlkwb{<-} \hlkwd{table_fun}\hlstd{(mod2c)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'bindrcpp' was built under R version 3.3.2}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Computing bootstrap confidence intervals ...}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in checkConv(attr(opt, "{}derivs"{}), opt\$par, ctrl = control\$checkConv, : Model failed to converge with max|grad| = 0.0396502 (tol = 0.002, component 1)}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Joining, by = "{}term"{}}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Joining, by = "{}term"{}}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Joining, by = c("{}term"{}, "{}estimate"{}, "{}lower"{}, "{}upper"{}, "{}type"{})}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Joining, by = c("{}term"{}, "{}estimate"{}, "{}type"{})}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: Column `estimate` has different attributes on LHS and RHS of join}}\end{kframe}
+\end{knitrout}
+
+\section{Time-Varying Covariate: Continuous (don't have any categorical)}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#adding planning diet as main effect (question 13)}
+\hlstd{modTV1} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlstd{wave} \hlopt{+} \hlstd{plans} \hlopt{+} \hlstd{(wave}\hlopt{|}\hlstd{ID),} \hlkwc{data} \hlstd{= data)}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'plans' not found}}\begin{alltt}
+\hlkwd{summary}\hlstd{(modTV1)}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in summary(modTV1): object 'modTV1' not found}}\begin{alltt}
+\hlstd{fixed.frame} \hlkwb{<-} \hlstd{data} \hlopt{%>%}
+  \hlkwd{summarise}\hlstd{(}\hlkwc{mean} \hlstd{=} \hlkwd{mean}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T),}
+            \hlkwc{sd} \hlstd{=} \hlkwd{sd}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in mean(plans, na.rm = T): object 'plans' not found}}\begin{alltt}
+\hlstd{fixed.frame} \hlkwb{<-}
+  \hlkwd{data.frame}\hlstd{(}
+    \hlkwd{expand.grid}\hlstd{(}
+      \hlcom{# here, you add values for your time variable and predictors}
+      \hlkwc{wave} \hlstd{=} \hlkwd{seq}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{40}\hlstd{,}\hlnum{1}\hlstd{),}
+      \hlkwc{plans} \hlstd{=} \hlkwd{c}\hlstd{(fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{-}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd,}
+                     \hlstd{fixed.frame}\hlopt{$}\hlstd{mean,}
+                     \hlstd{fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{+}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd)))} \hlopt{%>%}
+  \hlkwd{mutate}\hlstd{(}\hlkwc{pred} \hlstd{=} \hlkwd{predict}\hlstd{(modTV1,} \hlkwc{newdata} \hlstd{= .,} \hlkwc{re.form} \hlstd{=} \hlnum{NA}\hlstd{))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in predict(modTV1, newdata = ., re.form = NA): object 'modTV1' not found}}\begin{alltt}
+\hlstd{fixed.frame} \hlopt{%>%}
+  \hlkwd{mutate}\hlstd{(}\hlkwc{Plan} \hlstd{=} \hlkwd{factor}\hlstd{(plans,} \hlkwc{levels} \hlstd{=} \hlkwd{unique}\hlstd{(plans),} \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"-1SD"}\hlstd{,} \hlstr{"0SD"}\hlstd{,} \hlstr{"1SD"}\hlstd{)))} \hlopt{%>%}
+  \hlkwd{ggplot}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= wave,} \hlkwc{y} \hlstd{= pred,} \hlkwc{color} \hlstd{= Plan))} \hlopt{+}
+    \hlkwd{geom_line}\hlstd{(}\hlkwc{size} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
+    \hlkwd{lims}\hlstd{(}\hlkwc{y} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{200}\hlstd{,}\hlnum{250}\hlstd{))} \hlopt{+}
+    \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{"week"}\hlstd{,} \hlkwc{y} \hlstd{=} \hlstr{"Weight Composite"}\hlstd{,}
+         \hlkwc{title} \hlstd{=} \hlstr{"Continuous Invariant Conditional Growth Models"}\hlstd{)} \hlopt{+}
+    \hlkwd{theme_classic}\hlstd{()} \hlopt{+}
+    \hlkwd{theme}\hlstd{(}\hlkwc{axis.text} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{axis.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{legend.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{plot.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{),} \hlkwc{hjust} \hlstd{=} \hlnum{.5}\hlstd{))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in factor(plans, levels = unique(plans), labels = c("{}-1SD"{}, "{}0SD"{}, : object 'plans' not found}}\end{kframe}
+\end{knitrout}
+
+\section{Time-Varying Covariate with interaction: Continuous (don't have any categorical)}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#adding interaction}
+\hlstd{modTV2} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlstd{wave} \hlopt{+} \hlstd{plans} \hlopt{+} \hlstd{wave}\hlopt{:}\hlstd{plans} \hlopt{+} \hlstd{(wave}\hlopt{|}\hlstd{ID),} \hlkwc{data} \hlstd{= data)}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'plans' not found}}\begin{alltt}
+\hlkwd{summary}\hlstd{(modTV2)}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in summary(modTV2): object 'modTV2' not found}}\begin{alltt}
+\hlcom{#interaction not significant}
+\hlcom{#planning does not moderate the time course of weight loss}
+
+\hlstd{fixed.frame} \hlkwb{<-} \hlstd{data} \hlopt{%>%}
+  \hlkwd{summarise}\hlstd{(}\hlkwc{mean} \hlstd{=} \hlkwd{mean}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T),}
+            \hlkwc{sd} \hlstd{=} \hlkwd{sd}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in mean(plans, na.rm = T): object 'plans' not found}}\begin{alltt}
+\hlstd{fixed.frame} \hlkwb{<-}
+  \hlkwd{data.frame}\hlstd{(}
+    \hlkwd{expand.grid}\hlstd{(}
+      \hlcom{# here, you add values for your time variable and predictors}
+      \hlkwc{wave} \hlstd{=} \hlkwd{seq}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{40}\hlstd{,}\hlnum{1}\hlstd{),}
+      \hlkwc{plans} \hlstd{=} \hlkwd{c}\hlstd{(fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{-}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd,}
+                     \hlstd{fixed.frame}\hlopt{$}\hlstd{mean,}
+                     \hlstd{fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{+}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd)))} \hlopt{%>%}
+  \hlkwd{mutate}\hlstd{(}\hlkwc{pred} \hlstd{=} \hlkwd{predict}\hlstd{(modTV2,} \hlkwc{newdata} \hlstd{= .,} \hlkwc{re.form} \hlstd{=} \hlnum{NA}\hlstd{))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in predict(modTV2, newdata = ., re.form = NA): object 'modTV2' not found}}\begin{alltt}
+\hlstd{fixed.frame} \hlopt{%>%}
+  \hlkwd{mutate}\hlstd{(}\hlkwc{Plan} \hlstd{=} \hlkwd{factor}\hlstd{(plans,} \hlkwc{levels} \hlstd{=} \hlkwd{unique}\hlstd{(plans),} \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"-1SD"}\hlstd{,} \hlstr{"0SD"}\hlstd{,} \hlstr{"1SD"}\hlstd{)))} \hlopt{%>%}
+  \hlkwd{ggplot}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= wave,} \hlkwc{y} \hlstd{= pred,} \hlkwc{color} \hlstd{= Plan))} \hlopt{+}
+    \hlkwd{geom_line}\hlstd{(}\hlkwc{size} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
+    \hlkwd{lims}\hlstd{(}\hlkwc{y} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{200}\hlstd{,}\hlnum{250}\hlstd{))} \hlopt{+}
+    \hlkwd{labs}\hlstd{(}\hlkwc{x} \hlstd{=} \hlstr{"week"}\hlstd{,} \hlkwc{y} \hlstd{=} \hlstr{"Weight Composite"}\hlstd{,}
+         \hlkwc{title} \hlstd{=} \hlstr{"Continuous Invariant Conditional Growth Models"}\hlstd{)} \hlopt{+}
+    \hlkwd{theme_classic}\hlstd{()} \hlopt{+}
+    \hlkwd{theme}\hlstd{(}\hlkwc{axis.text} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{axis.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{legend.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
+          \hlkwc{plot.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{),} \hlkwc{hjust} \hlstd{=} \hlnum{.5}\hlstd{))}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in factor(plans, levels = unique(plans), labels = c("{}-1SD"{}, "{}0SD"{}, : object 'plans' not found}}\end{kframe}
+\end{knitrout}
+
+\end{document}
