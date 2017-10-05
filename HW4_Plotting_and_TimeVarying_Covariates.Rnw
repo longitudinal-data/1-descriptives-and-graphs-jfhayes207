@@ -2,6 +2,28 @@
 \setlength\parindent{0pt}
 \usepackage{fullpage}
 \usepackage{dcolumn}
+% \usepackage[table]{xcolor}
+\usepackage{array}
+\usepackage{lscape}
+\newcommand{\blandscape}{\begin{landscape}}
+\newcommand{\elandscape}{\end{landscape}}
+\usepackage{dcolumn}
+\usepackage{bbm}
+\usepackage{rotating, graphicx}
+\usepackage{tabulary}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{expex}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
 
 \begin{document}
 
@@ -17,7 +39,7 @@ dems <-read.table("agegender.csv", sep=',', header=TRUE)
 plan <- read.table("plandiet.csv", sep=',', header=TRUE)
 dems$age.c<-dems$age-49.094
 data <- merge(wgt, dems, by="ID")
-data <- join(data, plan, by=c("ID","wave"))
+data <- dplyr::left_join(data, plan, by=c("ID","wave"))
 data$gender[data$gender==1]<-0
 data$gender[data$gender==2]<-1
 library(tidyr)
@@ -198,8 +220,7 @@ fixed.frame %>%
 #adding interaction
 modTV2 <- lmer(weight ~ wave + plans + wave:plans + (wave|ID), data = data)
 summary(modTV2)
-#interaction not significant
-#planning does not moderate the time course of weight loss
+#interaction not significant meaning the correlation between planning and weight does not increase/decrease over time
 
 fixed.frame <- data %>%
   summarise(mean = mean(plans, na.rm = T), 

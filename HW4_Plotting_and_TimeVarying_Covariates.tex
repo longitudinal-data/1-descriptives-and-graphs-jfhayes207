@@ -52,6 +52,28 @@
 \setlength\parindent{0pt}
 \usepackage{fullpage}
 \usepackage{dcolumn}
+% \usepackage[table]{xcolor}
+\usepackage{array}
+\usepackage{lscape}
+\newcommand{\blandscape}{\begin{landscape}}
+\newcommand{\elandscape}{\end{landscape}}
+\usepackage{dcolumn}
+\usepackage{bbm}
+\usepackage{rotating, graphicx}
+\usepackage{tabulary}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{expex}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
@@ -69,11 +91,7 @@
 \hlstd{plan} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"plandiet.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
 \hlstd{dems}\hlopt{$}\hlstd{age.c} \hlkwb{<-} \hlstd{dems}\hlopt{$}\hlstd{age} \hlopt{-} \hlnum{49.094}
 \hlstd{data} \hlkwb{<-} \hlkwd{merge}\hlstd{(wgt, dems,} \hlkwc{by} \hlstd{=} \hlstr{"ID"}\hlstd{)}
-\hlstd{data} \hlkwb{<-} \hlkwd{join}\hlstd{(data, plan,} \hlkwc{by} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"ID"}\hlstd{,} \hlstr{"wave"}\hlstd{))}
-\end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): could not find function "{}join"{}}}\begin{alltt}
+\hlstd{data} \hlkwb{<-} \hlstd{dplyr}\hlopt{::}\hlkwd{left_join}\hlstd{(data, plan,} \hlkwc{by} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"ID"}\hlstd{,} \hlstr{"wave"}\hlstd{))}
 \hlstd{data}\hlopt{$}\hlstd{gender[data}\hlopt{$}\hlstd{gender} \hlopt{==} \hlnum{1}\hlstd{]} \hlkwb{<-} \hlnum{0}
 \hlstd{data}\hlopt{$}\hlstd{gender[data}\hlopt{$}\hlstd{gender} \hlopt{==} \hlnum{2}\hlstd{]} \hlkwb{<-} \hlnum{1}
 \hlkwd{library}\hlstd{(tidyr)}
@@ -332,8 +350,6 @@
 
 {\ttfamily\noindent\itshape\color{messagecolor}{\#\# Computing bootstrap confidence intervals ...}}
 
-{\ttfamily\noindent\color{warningcolor}{\#\# Warning in checkConv(attr(opt, "{}derivs"{}), opt\$par, ctrl = control\$checkConv, : Model failed to converge with max|grad| = 0.0396502 (tol = 0.002, component 1)}}
-
 {\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
 
 {\ttfamily\noindent\color{warningcolor}{\#\# Warning in norm.inter(t, alpha): extreme order statistics used as endpoints}}
@@ -368,22 +384,42 @@
 \begin{alltt}
 \hlcom{#adding planning diet as main effect (question 13)}
 \hlstd{modTV1} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlstd{wave} \hlopt{+} \hlstd{plans} \hlopt{+} \hlstd{(wave}\hlopt{|}\hlstd{ID),} \hlkwc{data} \hlstd{= data)}
-\end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'plans' not found}}\begin{alltt}
 \hlkwd{summary}\hlstd{(modTV1)}
 \end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in summary(modTV1): object 'modTV1' not found}}\begin{alltt}
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: weight ~ wave + plans + (wave | ID)
+##    Data: data
+## 
+## REML criterion at convergence: 3484.2
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -2.7045 -0.3998  0.0125  0.4285  2.4614 
+## 
+## Random effects:
+##  Groups   Name        Variance  Std.Dev. Corr 
+##  ID       (Intercept) 2580.9195 50.803        
+##           wave           0.1739  0.417   -0.40
+##  Residual               23.2457  4.821        
+## Number of obs: 429, groups:  ID, 129
+## 
+## Fixed effects:
+##              Estimate Std. Error t value
+## (Intercept) 245.33396    4.68368   52.38
+## wave         -0.59530    0.04625  -12.87
+## plans        -2.48103    0.39465   -6.29
+## 
+## Correlation of Fixed Effects:
+##       (Intr) wave  
+## wave  -0.254       
+## plans -0.284 -0.278
+\end{verbatim}
+\begin{alltt}
 \hlstd{fixed.frame} \hlkwb{<-} \hlstd{data} \hlopt{%>%}
   \hlkwd{summarise}\hlstd{(}\hlkwc{mean} \hlstd{=} \hlkwd{mean}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T),}
             \hlkwc{sd} \hlstd{=} \hlkwd{sd}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T))}
-\end{alltt}
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in mean(plans, na.rm = T): object 'plans' not found}}\begin{alltt}
 \hlstd{fixed.frame} \hlkwb{<-}
   \hlkwd{data.frame}\hlstd{(}
     \hlkwd{expand.grid}\hlstd{(}
@@ -393,10 +429,8 @@
                      \hlstd{fixed.frame}\hlopt{$}\hlstd{mean,}
                      \hlstd{fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{+}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd)))} \hlopt{%>%}
   \hlkwd{mutate}\hlstd{(}\hlkwc{pred} \hlstd{=} \hlkwd{predict}\hlstd{(modTV1,} \hlkwc{newdata} \hlstd{= .,} \hlkwc{re.form} \hlstd{=} \hlnum{NA}\hlstd{))}
-\end{alltt}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in predict(modTV1, newdata = ., re.form = NA): object 'modTV1' not found}}\begin{alltt}
 \hlstd{fixed.frame} \hlopt{%>%}
   \hlkwd{mutate}\hlstd{(}\hlkwc{Plan} \hlstd{=} \hlkwd{factor}\hlstd{(plans,} \hlkwc{levels} \hlstd{=} \hlkwd{unique}\hlstd{(plans),} \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"-1SD"}\hlstd{,} \hlstr{"0SD"}\hlstd{,} \hlstr{"1SD"}\hlstd{)))} \hlopt{%>%}
   \hlkwd{ggplot}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= wave,} \hlkwc{y} \hlstd{= pred,} \hlkwc{color} \hlstd{= Plan))} \hlopt{+}
@@ -410,9 +444,9 @@
           \hlkwc{legend.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
           \hlkwc{plot.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{),} \hlkwc{hjust} \hlstd{=} \hlnum{.5}\hlstd{))}
 \end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-5-1} 
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in factor(plans, levels = unique(plans), labels = c("{}-1SD"{}, "{}0SD"{}, : object 'plans' not found}}\end{kframe}
 \end{knitrout}
 
 \section{Time-Varying Covariate with interaction: Continuous (don't have any categorical)}
@@ -422,25 +456,46 @@
 \begin{alltt}
 \hlcom{#adding interaction}
 \hlstd{modTV2} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlstd{wave} \hlopt{+} \hlstd{plans} \hlopt{+} \hlstd{wave}\hlopt{:}\hlstd{plans} \hlopt{+} \hlstd{(wave}\hlopt{|}\hlstd{ID),} \hlkwc{data} \hlstd{= data)}
-\end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): object 'plans' not found}}\begin{alltt}
 \hlkwd{summary}\hlstd{(modTV2)}
 \end{alltt}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in summary(modTV2): object 'modTV2' not found}}\begin{alltt}
-\hlcom{#interaction not significant}
-\hlcom{#planning does not moderate the time course of weight loss}
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: weight ~ wave + plans + wave:plans + (wave | ID)
+##    Data: data
+## 
+## REML criterion at convergence: 3488.2
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -2.70606 -0.39277  0.02421  0.43815  2.47574 
+## 
+## Random effects:
+##  Groups   Name        Variance  Std.Dev. Corr 
+##  ID       (Intercept) 2582.2788 50.8161       
+##           wave           0.1794  0.4235  -0.40
+##  Residual               22.9539  4.7910       
+## Number of obs: 429, groups:  ID, 129
+## 
+## Fixed effects:
+##              Estimate Std. Error t value
+## (Intercept) 246.13958    4.75358   51.78
+## wave         -0.73244    0.14951   -4.90
+## plans        -2.71202    0.45700   -5.93
+## wave:plans    0.03452    0.03569    0.97
+## 
+## Correlation of Fixed Effects:
+##            (Intr) wave   plans 
+## wave       -0.241              
+## plans      -0.327  0.411       
+## wave:plans  0.172 -0.950 -0.510
+\end{verbatim}
+\begin{alltt}
+\hlcom{#interaction not significant meaning the correlation between planning and weight does not increase/decrease over time}
 
 \hlstd{fixed.frame} \hlkwb{<-} \hlstd{data} \hlopt{%>%}
   \hlkwd{summarise}\hlstd{(}\hlkwc{mean} \hlstd{=} \hlkwd{mean}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T),}
             \hlkwc{sd} \hlstd{=} \hlkwd{sd}\hlstd{(plans,} \hlkwc{na.rm} \hlstd{= T))}
-\end{alltt}
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in mean(plans, na.rm = T): object 'plans' not found}}\begin{alltt}
 \hlstd{fixed.frame} \hlkwb{<-}
   \hlkwd{data.frame}\hlstd{(}
     \hlkwd{expand.grid}\hlstd{(}
@@ -450,10 +505,8 @@
                      \hlstd{fixed.frame}\hlopt{$}\hlstd{mean,}
                      \hlstd{fixed.frame}\hlopt{$}\hlstd{mean}\hlopt{+}\hlstd{fixed.frame}\hlopt{$}\hlstd{sd)))} \hlopt{%>%}
   \hlkwd{mutate}\hlstd{(}\hlkwc{pred} \hlstd{=} \hlkwd{predict}\hlstd{(modTV2,} \hlkwc{newdata} \hlstd{= .,} \hlkwc{re.form} \hlstd{=} \hlnum{NA}\hlstd{))}
-\end{alltt}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in predict(modTV2, newdata = ., re.form = NA): object 'modTV2' not found}}\begin{alltt}
 \hlstd{fixed.frame} \hlopt{%>%}
   \hlkwd{mutate}\hlstd{(}\hlkwc{Plan} \hlstd{=} \hlkwd{factor}\hlstd{(plans,} \hlkwc{levels} \hlstd{=} \hlkwd{unique}\hlstd{(plans),} \hlkwc{labels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"-1SD"}\hlstd{,} \hlstr{"0SD"}\hlstd{,} \hlstr{"1SD"}\hlstd{)))} \hlopt{%>%}
   \hlkwd{ggplot}\hlstd{(}\hlkwd{aes}\hlstd{(}\hlkwc{x} \hlstd{= wave,} \hlkwc{y} \hlstd{= pred,} \hlkwc{color} \hlstd{= Plan))} \hlopt{+}
@@ -467,9 +520,9 @@
           \hlkwc{legend.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{)),}
           \hlkwc{plot.title} \hlstd{=} \hlkwd{element_text}\hlstd{(}\hlkwc{face} \hlstd{=} \hlstr{"bold"}\hlstd{,} \hlkwc{size} \hlstd{=} \hlkwd{rel}\hlstd{(}\hlnum{1.2}\hlstd{),} \hlkwc{hjust} \hlstd{=} \hlnum{.5}\hlstd{))}
 \end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-6-1} 
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in factor(plans, levels = unique(plans), labels = c("{}-1SD"{}, "{}0SD"{}, : object 'plans' not found}}\end{kframe}
 \end{knitrout}
 
 \end{document}
