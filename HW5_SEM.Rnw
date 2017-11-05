@@ -1,0 +1,305 @@
+\documentclass{article}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+
+\begin{document}
+
+\title{SEM\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{10/31/17}
+
+<<tidy=TRUE>>=
+rm(list=ls())
+setwd("~/Dropbox/Classes/Longitudinal Data Analysis")
+wgt <-read.table("weightslong.csv", sep=',', header=TRUE)
+wgtwide <-read.table("weightsbyweek.csv", sep=',', header=TRUE)
+dems <-read.table("agegender.csv", sep=',', header=TRUE)
+dems$age.c<-dems$age-49.094
+data <- merge(wgt, dems, by="ID")
+data$gender[data$gender==1]<-0
+data$gender[data$gender==2]<-1
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(ggplot2)
+library(lme4)
+library(lavaan)
+library(semPlot)
+library(semTools)
+@
+
+\section{Question 1}
+\textbf{\large{\textit{
+Fit a measurement model to your constructs at one time point. Try out the different types of scaling discussed in class. What changes and what stays the same?
+}}}
+
+<<tidy=TRUE>>=
+plan <-read.table("planQ.csv", sep=',', header=TRUE)
+plans.model <- ' make  =~ makedietplans + planmealtimes + makeexerplan +  makeexertimes + maketempplan     
+              follow =~ followdietplans + followmealtimes + followexerplan + followexertimes + followtempplan'
+plansfit <- cfa(plans.model, data=plan)
+summary(plansfit, fit.measures=TRUE, standardized=TRUE)
+semPaths(plansfit, what = "std")
+
+plansfit.2 <- cfa(plans.model, std.lv=TRUE, data=plan)
+summary(plansfit.2, fit.measures=TRUE, standardized=TRUE)
+semPaths(plansfit.2, what = "std")
+#estimates change quite a bit, although the standardized values stay the same
+#Fit indices also stay the same
+@
+
+\section{Question 2}
+\textbf{\large{\textit{
+What do the fit statistics say about your latent variable? Good/bad? Is your latent variable Just identified/saturdated, under identified or over identified?
+}}}
+
+<<tidy=TRUE>>=
+#RMSEA and SRMR indicate poor fit
+#CFI and TLI indicate poor fit
+#model is overidentified 
+
+#split diet and exercise plans
+dietplans.model <- ' make  =~ makedietplans + planmealtimes + maketempplan     
+              follow =~ followdietplans + followmealtimes + followtempplan'
+dietplansfit.fix <- cfa(dietplans.model, std.lv=TRUE, data=plan)
+summary(dietplansfit.fix, fit.measures=TRUE, standardized=TRUE)
+semPaths(dietplansfit.fix, what = "std")
+#does a little better
+#SRMR indicates acceptable fit, RMSEA still way too high
+#CFI and TLI still below .9
+#overidentified
+
+exerplans.model <- ' make  =~ makeexerplan +  makeexertimes     
+              follow =~ followexerplan + followexertimes'
+exerplansfit.fix <- cfa(exerplans.model, std.lv=TRUE, data=plan)
+summary(exerplansfit.fix, fit.measures=TRUE, standardized=TRUE)
+semPaths(exerplansfit.fix, what = "std")
+#should be underidentified, but df is 6 or is it 1? which one to look at?  
+#RMSEA (.67) way too high, SRMR (.032) is good - sooo diferent, why?
+#CFI pretty close to .9, TLI still way off
+@
+
+\section{Question 3}
+\textbf{\large{\textit{
+Fit a longitudinal CFA model where you a) first correlate your latent factors across time and then b) a second model that predicts later times by a prevous time (ie auto regressive; t1 -> t2 -> t3). What are your conclusions? How does one differ from the other?
+}}}
+
+<<tidy=TRUE>>=
+#make plans wide
+#create subset of data and widen
+plansub <- subset(plan, select = c(ID, week, makedietplans, planmealtimes, maketempplan))
+library(reshape2)
+plansub <- reshape(plansub, idvar = "ID", timevar = "week", direction = "wide")
+
+longcfa <- '
+makedietplans =~ makedietplans.0 + makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+planmealtimes =~ planmealtimes.0 + planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+maketempplan =~ maketempplan.0 + maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+
+#correlated residuals across time
+makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.10 ~~ makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.20 ~~ makedietplans.30 + makedietplans.40
+makedietplans.30 ~~ makedietplans.40
+planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
+planmealtimes.30 ~~ planmealtimes.40
+maketempplan.0 ~~ maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.10 ~~ maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.20 ~~ maketempplan.30 + maketempplan.40
+maketempplan.30 ~~ maketempplan.40
+'
+
+fit.long.cfa <- cfa(longcfa, data=plansub, std.lv=TRUE)
+
+summary(fit.long.cfa, standardized=TRUE, fit.measures=TRUE)
+
+#CROSS_LAGGED - took down to two latent variables
+long.cross <- '
+## define latent variables
+makedietplans =~ makedietplans.0 + makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+planmealtimes =~ planmealtimes.0 + planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+
+## free latent variances at later times (only set the scale once)
+makedietplans.10 ~~ NA*makedietplans.10
+makedietplans.20 ~~ NA*makedietplans.20
+makedietplans.30 ~~ NA*makedietplans.30
+makedietplans.40 ~~ NA*makedietplans.40
+planmealtimes.10 ~~ NA*planmealtimes.10
+planmealtimes.20 ~~ NA*planmealtimes.20
+planmealtimes.30 ~~ NA*planmealtimes.30
+planmealtimes.40 ~~ NA*planmealtimes.40
+
+makedietplans.10 ~~ planmealtimes.10
+makedietplans.20 ~~ planmealtimes.20
+makedietplans.30 ~~ planmealtimes.30
+makedietplans.40 ~~ planmealtimes.40
+
+## directional regression paths
+makedietplans.10 ~ makedietplans.0 + planmealtimes.0
+planmealtimes.10 ~ planmealtimes.0 + makedietplans.0
+makedietplans.20 ~ makedietplans.10 + planmealtimes.10
+planmealtimes.20 ~ planmealtimes.10 + makedietplans.10
+makedietplans.30 ~ makedietplans.20 + planmealtimes.20
+planmealtimes.30 ~ planmealtimes.20 + makedietplans.20
+makedietplans.40 ~ makedietplans.30 + planmealtimes.30
+planmealtimes.40 ~ planmealtimes.30 + makedietplans.30
+
+## correlated residuals across time
+makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.10 ~~ makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.20 ~~ makedietplans.30 + makedietplans.40
+makedietplans.30 ~~ makedietplans.40
+planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
+planmealtimes.30 ~~ planmealtimes.40
+'
+
+fit.long.cross <- sem(long.cross, data=plansub, std.lv=TRUE)
+
+summary(fit.long.cross, standardized=TRUE, fit.measures=TRUE)
+#Not getting fit indices
+@
+
+\section{Question 4}
+\textbf{\large{\textit{
+Fit a longitdinal growth model in SEM and in HLM. Compare and contrast the differences.
+}}}
+
+<<tidy=TRUE>>=
+#SEM
+#intercept only model
+SEMIntOnly <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40 '
+SEMIntOnlyfit <- growth(SEMIntOnly, missing = "ML", data = wgtwide)
+summary(SEMIntOnlyfit)
+semPaths(SEMIntOnlyfit, what = "std")
+
+#intercept and fixed slope
+SEMFixSlopes <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance'
+SEMFixSlopesfit <- growth(SEMFixSlopes, missing = "ML", data = wgtwide)
+inspect(SEMFixSlopesfit, "cov.lv")
+summary(SEMFixSlopesfit)
+semPaths(SEMFixSlopesfit, what = "std")
+
+#improve model fit?
+anova(SEMIntOnlyfit, SEMFixSlopesfit)
+#yes
+
+#intercept and random slope
+SEMRanSlopes <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40'
+SEMRanSlopesfit <- growth(SEMRanSlopes, missing = "ML", data = wgtwide)
+summary(SEMRanSlopesfit)
+semPaths(SEMRanSlopesfit, what = "std")
+#improve model fit?
+anova(SEMFixSlopesfit, SEMRanSlopesfit)
+#nope - random slope doesn't improve fit
+
+#MLM
+MLMIntOnly <- lmer(weight~ 1+ (1|ID), data=wgt)
+summary(MLMIntOnly)
+summary(SEMIntOnlyfit)
+#Fixed effect similar 224 vs. 222
+#Random effect similar variance
+#Random effect residuals quite different - due to full inclusion of data in MLM?
+MLMFixSlope <- lmer(weight~ 1+ wave + (1|ID), data=wgt)
+summary(MLMFixSlope)
+summary(SEMFixSlopesfit)
+#Fixed and random effects similar
+@
+
+\section{Question 5}
+\textbf{\large{\textit{
+Constrain the residual variances to be equal. Does this change the fit of your model?
+}}}
+
+<<tidy=TRUE>>=
+SEMFixSlopesres <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance
+                  w_0 ~~ a*w_0
+                  w_20 ~~ a*w_20
+                  w_40 ~~ a*w_40 #residuals are equal to each other'
+SEMFixSlopesfitres <- growth(SEMFixSlopesres, missing = "ML", data = wgtwide)
+summary(SEMFixSlopesfitres)
+SEMFixSlopesfit <- growth(SEMFixSlopes, missing = "ML", data = wgtwide)
+summary(SEMFixSlopesfit)
+
+anova(SEMFixSlopesfit,SEMFixSlopesfitres)
+#Fixing residuals to equal each other makes the model significantly worse
+@
+
+\section{Question 6}
+\textbf{\large{\textit{
+Contrain your slope to be fixed, not random. How does this change your model?
+}}}
+
+<<tidy=TRUE>>=
+#see above
+anova(SEMFixSlopesfit, SEMRanSlopesfit)
+#Model produces similar results with fixed and random slopes
+@
+
+\section{Question 7}
+\textbf{\large{\textit{
+Change the time metric in your SEM growth model. How does that change your estimates? Does it change your fit statistics?
+}}}
+
+<<tidy=TRUE>>=
+SEMFixSlopestime <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 1*w_20 + 2*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance'
+SEMFixSlopesfittime <- growth(SEMFixSlopestime, missing = "ML", data = wgtwide)
+summary(SEMFixSlopesfittime)
+summary(SEMFixSlopesfit)
+#same - same distance between variables.
+
+#Different intercept
+SEMFixSlopesint <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ -20*w_0 + 0*w_20 + 20*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance'
+SEMFixSlopesfitint <- growth(SEMFixSlopesint, missing = "ML", data = wgtwide)
+summary(SEMFixSlopesfitint)
+#intercept different, lower, at week 20, average weight would be lower
+#random effect of intercept is lower
+#slope and residual variance the same
+semPaths(SEMFixSlopesfitint, what = "std")
+@
+
+\section{Question 8}
+\textbf{\large{\textit{
+Try a different type of estimation (see lavaan tutorial for details). How does that change your model?
+}}}
+
+<<tidy=TRUE>>=
+SEMFixSlopesMLM <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance'
+SEMFixSlopesfitMLM <- growth(SEMFixSlopesMLM, estimator = "MLM", data = wgtwide)
+summary(SEMFixSlopesfitMLM)
+summary(SEMFixSlopesfit)
+#lower intercept, slower rate of change
+semPaths(SEMFixSlopesfitMLM, what="std")
+@
+
+\section{Question 9}
+\textbf{\large{\textit{
+Provide semplots for each of the models
+}}}
+
+<<tidy=TRUE>>=
+#Graphs provided throughout
+@
+
+\end{document}

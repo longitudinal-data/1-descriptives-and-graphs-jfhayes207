@@ -1,0 +1,1833 @@
+\documentclass{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\setlength\parindent{0pt}
+\usepackage{fullpage}
+\usepackage{dcolumn}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+\title{SEM\\ Longitudinal Data Analysis}
+\author{Jackie Hayes}
+\date{10/31/17}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{rm}\hlstd{(}\hlkwc{list} \hlstd{=} \hlkwd{ls}\hlstd{())}
+\hlkwd{setwd}\hlstd{(}\hlstr{"~/Dropbox/Classes/Longitudinal Data Analysis"}\hlstd{)}
+\hlstd{wgt} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"weightslong.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{wgtwide} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"weightsbyweek.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{dems} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"agegender.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{dems}\hlopt{$}\hlstd{age.c} \hlkwb{<-} \hlstd{dems}\hlopt{$}\hlstd{age} \hlopt{-} \hlnum{49.094}
+\hlstd{data} \hlkwb{<-} \hlkwd{merge}\hlstd{(wgt, dems,} \hlkwc{by} \hlstd{=} \hlstr{"ID"}\hlstd{)}
+\hlstd{data}\hlopt{$}\hlstd{gender[data}\hlopt{$}\hlstd{gender} \hlopt{==} \hlnum{1}\hlstd{]} \hlkwb{<-} \hlnum{0}
+\hlstd{data}\hlopt{$}\hlstd{gender[data}\hlopt{$}\hlstd{gender} \hlopt{==} \hlnum{2}\hlstd{]} \hlkwb{<-} \hlnum{1}
+\hlkwd{library}\hlstd{(tidyr)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'tidyr' was built under R version 3.3.2}}\begin{alltt}
+\hlkwd{library}\hlstd{(dplyr)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'dplyr' was built under R version 3.3.2}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'dplyr'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following objects are masked from 'package:stats':\\\#\# \\\#\#\ \ \ \  filter, lag}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following objects are masked from 'package:base':\\\#\# \\\#\#\ \ \ \  intersect, setdiff, setequal, union}}\begin{alltt}
+\hlkwd{library}\hlstd{(plyr)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# -------------------------------------------------------------------------}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# You have loaded plyr after dplyr - this is likely to cause problems.\\\#\# If you need functions from both plyr and dplyr, please load plyr first, then dplyr:\\\#\# library(plyr); library(dplyr)}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# -------------------------------------------------------------------------}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'plyr'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following objects are masked from 'package:dplyr':\\\#\# \\\#\#\ \ \ \  arrange, count, desc, failwith, id, mutate, rename, summarise,\\\#\#\ \ \ \  summarize}}\begin{alltt}
+\hlkwd{library}\hlstd{(lubridate)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'lubridate'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:plyr':\\\#\# \\\#\#\ \ \ \  here}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:base':\\\#\# \\\#\#\ \ \ \  date}}\begin{alltt}
+\hlkwd{library}\hlstd{(ggplot2)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'ggplot2' was built under R version 3.3.2}}\begin{alltt}
+\hlkwd{library}\hlstd{(lme4)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Loading required package: Matrix}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'Matrix'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:tidyr':\\\#\# \\\#\#\ \ \ \  expand}}\begin{alltt}
+\hlkwd{library}\hlstd{(lavaan)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'lavaan' was built under R version 3.3.2}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# This is lavaan 0.5-23.1097}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# lavaan is BETA software! Please report any bugs.}}\begin{alltt}
+\hlkwd{library}\hlstd{(semPlot)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning: package 'semPlot' was built under R version 3.3.2}}\begin{alltt}
+\hlkwd{library}\hlstd{(semTools)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# }}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# This is semTools 0.4-14}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# All users of R (or SEM) are invited to submit functions or ideas for functions.}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}}\end{kframe}
+\end{knitrout}
+
+\section{Question 1}
+\textbf{\large{\textit{
+Fit a measurement model to your constructs at one time point. Try out the different types of scaling discussed in class. What changes and what stays the same?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{plan} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"planQ.csv"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{","}\hlstd{,} \hlkwc{header} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{plans.model} \hlkwb{<-} \hlstr{" make  =~ makedietplans + planmealtimes + makeexerplan +  makeexertimes + maketempplan     
+              follow =~ followdietplans + followmealtimes + followexerplan + followexertimes + followtempplan"}
+\hlstd{plansfit} \hlkwb{<-} \hlkwd{cfa}\hlstd{(plans.model,} \hlkwc{data} \hlstd{= plan)}
+\hlkwd{summary}\hlstd{(plansfit,} \hlkwc{fit.measures} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{standardized} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after  53 iterations
+## 
+##                                                   Used       Total
+##   Number of observations                           486         660
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic             1390.612
+##   Degrees of freedom                                34
+##   P-value (Chi-square)                           0.000
+## 
+## Model test baseline model:
+## 
+##   Minimum Function Test Statistic             3736.820
+##   Degrees of freedom                                45
+##   P-value                                        0.000
+## 
+## User model versus baseline model:
+## 
+##   Comparative Fit Index (CFI)                    0.633
+##   Tucker-Lewis Index (TLI)                       0.514
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -6230.771
+##   Loglikelihood unrestricted model (H1)      -5535.465
+## 
+##   Number of free parameters                         21
+##   Akaike (AIC)                               12503.543
+##   Bayesian (BIC)                             12591.453
+##   Sample-size adjusted Bayesian (BIC)        12524.800
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.287
+##   90 Percent Confidence Interval          0.274  0.300
+##   P-value RMSEA <= 0.05                          0.000
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.179
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make =~                                                               
+##     makedietplans     1.000                               0.440    0.447
+##     planmealtimes     1.032    0.143    7.206    0.000    0.454    0.416
+##     makeexerplan      2.439    0.235   10.374    0.000    1.073    0.908
+##     makeexertimes     2.568    0.247   10.392    0.000    1.130    0.914
+##     maketempplan      1.151    0.141    8.151    0.000    0.506    0.510
+##   follow =~                                                             
+##     followdietplns    1.000                               0.356    0.422
+##     followmealtims    1.218    0.297    4.097    0.000    0.433    0.206
+##     followexerplan    2.766    0.285    9.715    0.000    0.984    0.914
+##     followexertims    2.963    0.304    9.736    0.000    1.054    0.923
+##     followtempplan    0.937    0.138    6.777    0.000    0.333    0.398
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make ~~                                                               
+##     follow            0.148    0.023    6.548    0.000    0.948    0.948
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##    .makedietplans     0.774    0.050   15.333    0.000    0.774    0.800
+##    .planmealtimes     0.983    0.064   15.375    0.000    0.983    0.827
+##    .makeexerplan      0.245    0.024   10.404    0.000    0.245    0.175
+##    .makeexertimes     0.250    0.025    9.963    0.000    0.250    0.164
+##    .maketempplan      0.730    0.048   15.230    0.000    0.730    0.740
+##    .followdietplns    0.584    0.038   15.374    0.000    0.584    0.822
+##    .followmealtims    4.240    0.273   15.545    0.000    4.240    0.958
+##    .followexerplan    0.192    0.019   10.121    0.000    0.192    0.165
+##    .followexertims    0.194    0.021    9.409    0.000    0.194    0.149
+##    .followtempplan    0.591    0.038   15.403    0.000    0.591    0.842
+##     make              0.194    0.038    5.047    0.000    1.000    1.000
+##     follow            0.127    0.027    4.735    0.000    1.000    1.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(plansfit,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-2-1} 
+\begin{kframe}\begin{alltt}
+\hlstd{plansfit.2} \hlkwb{<-} \hlkwd{cfa}\hlstd{(plans.model,} \hlkwc{std.lv} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{data} \hlstd{= plan)}
+\hlkwd{summary}\hlstd{(plansfit.2,} \hlkwc{fit.measures} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{standardized} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after  37 iterations
+## 
+##                                                   Used       Total
+##   Number of observations                           486         660
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic             1390.612
+##   Degrees of freedom                                34
+##   P-value (Chi-square)                           0.000
+## 
+## Model test baseline model:
+## 
+##   Minimum Function Test Statistic             3736.820
+##   Degrees of freedom                                45
+##   P-value                                        0.000
+## 
+## User model versus baseline model:
+## 
+##   Comparative Fit Index (CFI)                    0.633
+##   Tucker-Lewis Index (TLI)                       0.514
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -6230.771
+##   Loglikelihood unrestricted model (H1)      -5535.465
+## 
+##   Number of free parameters                         21
+##   Akaike (AIC)                               12503.543
+##   Bayesian (BIC)                             12591.453
+##   Sample-size adjusted Bayesian (BIC)        12524.800
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.287
+##   90 Percent Confidence Interval          0.274  0.300
+##   P-value RMSEA <= 0.05                          0.000
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.179
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make =~                                                               
+##     makedietplans     0.440    0.044   10.095    0.000    0.440    0.447
+##     planmealtimes     0.454    0.049    9.325    0.000    0.454    0.416
+##     makeexerplan      1.073    0.042   25.619    0.000    1.073    0.908
+##     makeexertimes     1.130    0.044   25.913    0.000    1.130    0.914
+##     maketempplan      0.506    0.043   11.713    0.000    0.506    0.510
+##   follow =~                                                             
+##     followdietplns    0.356    0.038    9.471    0.000    0.356    0.422
+##     followmealtims    0.433    0.097    4.450    0.000    0.433    0.206
+##     followexerplan    0.984    0.038   25.896    0.000    0.984    0.914
+##     followexertims    1.054    0.040   26.323    0.000    1.054    0.923
+##     followtempplan    0.333    0.038    8.880    0.000    0.333    0.398
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make ~~                                                               
+##     follow            0.948    0.010   92.042    0.000    0.948    0.948
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##    .makedietplans     0.774    0.050   15.333    0.000    0.774    0.800
+##    .planmealtimes     0.983    0.064   15.375    0.000    0.983    0.827
+##    .makeexerplan      0.245    0.024   10.404    0.000    0.245    0.175
+##    .makeexertimes     0.250    0.025    9.963    0.000    0.250    0.164
+##    .maketempplan      0.730    0.048   15.230    0.000    0.730    0.740
+##    .followdietplns    0.584    0.038   15.374    0.000    0.584    0.822
+##    .followmealtims    4.240    0.273   15.545    0.000    4.240    0.958
+##    .followexerplan    0.192    0.019   10.121    0.000    0.192    0.165
+##    .followexertims    0.194    0.021    9.409    0.000    0.194    0.149
+##    .followtempplan    0.591    0.038   15.403    0.000    0.591    0.842
+##     make              1.000                               1.000    1.000
+##     follow            1.000                               1.000    1.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(plansfit.2,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-2-2} 
+\begin{kframe}\begin{alltt}
+\hlcom{# estimates change quite a bit, although the standardized values stay the}
+\hlcom{# same Fit indices also stay the same}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Question 2}
+\textbf{\large{\textit{
+What do the fit statistics say about your latent variable? Good/bad? Is your latent variable Just identified/saturdated, under identified or over identified?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# RMSEA and SRMR indicate poor fit CFI and TLI indicate poor fit model is}
+\hlcom{# overidentified}
+
+\hlcom{# split diet and exercise plans}
+\hlstd{dietplans.model} \hlkwb{<-} \hlstr{" make  =~ makedietplans + planmealtimes + maketempplan     
+              follow =~ followdietplans + followmealtimes + followtempplan"}
+\hlstd{dietplansfit.fix} \hlkwb{<-} \hlkwd{cfa}\hlstd{(dietplans.model,} \hlkwc{std.lv} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{data} \hlstd{= plan)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(dietplansfit.fix,} \hlkwc{fit.measures} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{standardized} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after  21 iterations
+## 
+##                                                   Used       Total
+##   Number of observations                           490         660
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic              251.145
+##   Degrees of freedom                                 8
+##   P-value (Chi-square)                           0.000
+## 
+## Model test baseline model:
+## 
+##   Minimum Function Test Statistic             1396.587
+##   Degrees of freedom                                15
+##   P-value                                        0.000
+## 
+## User model versus baseline model:
+## 
+##   Comparative Fit Index (CFI)                    0.824
+##   Tucker-Lewis Index (TLI)                       0.670
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -3817.581
+##   Loglikelihood unrestricted model (H1)      -3692.009
+## 
+##   Number of free parameters                         13
+##   Akaike (AIC)                                7661.163
+##   Bayesian (BIC)                              7715.690
+##   Sample-size adjusted Bayesian (BIC)         7674.428
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.249
+##   90 Percent Confidence Interval          0.223  0.276
+##   P-value RMSEA <= 0.05                          0.000
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.080
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make =~                                                               
+##     makedietplans     0.828    0.038   21.825    0.000    0.828    0.844
+##     planmealtimes     0.679    0.047   14.575    0.000    0.679    0.623
+##     maketempplan      0.716    0.041   17.652    0.000    0.716    0.722
+##   follow =~                                                             
+##     followdietplns    0.707    0.033   21.203    0.000    0.707    0.841
+##     followmealtims    0.675    0.098    6.919    0.000    0.675    0.322
+##     followtempplan    0.578    0.035   16.577    0.000    0.578    0.691
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make ~~                                                               
+##     follow            1.010    0.022   46.701    0.000    1.010    1.010
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##    .makedietplans     0.277    0.028    9.885    0.000    0.277    0.288
+##    .planmealtimes     0.725    0.051   14.361    0.000    0.725    0.611
+##    .maketempplan      0.471    0.035   13.373    0.000    0.471    0.478
+##    .followdietplns    0.207    0.023    9.002    0.000    0.207    0.293
+##    .followmealtims    3.938    0.255   15.426    0.000    3.938    0.896
+##    .followtempplan    0.366    0.027   13.665    0.000    0.366    0.523
+##     make              1.000                               1.000    1.000
+##     follow            1.000                               1.000    1.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(dietplansfit.fix,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-3-1} 
+\begin{kframe}\begin{alltt}
+\hlcom{# does a little better SRMR indicates acceptable fit, RMSEA still way too}
+\hlcom{# high CFI and TLI still below .9 overidentified}
+
+\hlstd{exerplans.model} \hlkwb{<-} \hlstr{" make  =~ makeexerplan +  makeexertimes     
+              follow =~ followexerplan + followexertimes"}
+\hlstd{exerplansfit.fix} \hlkwb{<-} \hlkwd{cfa}\hlstd{(exerplans.model,} \hlkwc{std.lv} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{data} \hlstd{= plan)}
+\hlkwd{summary}\hlstd{(exerplansfit.fix,} \hlkwc{fit.measures} \hlstd{=} \hlnum{TRUE}\hlstd{,} \hlkwc{standardized} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after  21 iterations
+## 
+##                                                   Used       Total
+##   Number of observations                           491         660
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic              221.432
+##   Degrees of freedom                                 1
+##   P-value (Chi-square)                           0.000
+## 
+## Model test baseline model:
+## 
+##   Minimum Function Test Statistic             2147.525
+##   Degrees of freedom                                 6
+##   P-value                                        0.000
+## 
+## User model versus baseline model:
+## 
+##   Comparative Fit Index (CFI)                    0.897
+##   Tucker-Lewis Index (TLI)                       0.382
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)              -2116.476
+##   Loglikelihood unrestricted model (H1)      -2005.760
+## 
+##   Number of free parameters                          9
+##   Akaike (AIC)                                4250.952
+##   Bayesian (BIC)                              4288.720
+##   Sample-size adjusted Bayesian (BIC)         4260.154
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.670
+##   90 Percent Confidence Interval          0.597  0.746
+##   P-value RMSEA <= 0.05                          0.000
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.032
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make =~                                                               
+##     makeexerplan      1.057    0.042   24.929    0.000    1.057    0.891
+##     makeexertimes     1.160    0.043   27.051    0.000    1.160    0.936
+##   follow =~                                                             
+##     followexerplan    0.977    0.038   25.686    0.000    0.977    0.906
+##     followexertims    1.079    0.039   27.487    0.000    1.079    0.943
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   make ~~                                                               
+##     follow            0.946    0.010   90.561    0.000    0.946    0.946
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##    .makeexerplan      0.291    0.025   11.418    0.000    0.291    0.206
+##    .makeexertimes     0.190    0.024    7.832    0.000    0.190    0.124
+##    .followexerplan    0.209    0.019   10.879    0.000    0.209    0.179
+##    .followexertims    0.145    0.019    7.535    0.000    0.145    0.110
+##     make              1.000                               1.000    1.000
+##     follow            1.000                               1.000    1.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(exerplansfit.fix,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-3-2} 
+\begin{kframe}\begin{alltt}
+\hlcom{# should be underidentified, but df is 6 or is it 1? which one to look at?}
+\hlcom{# RMSEA (.67) way too high, SRMR (.032) is good - sooo diferent, why? CFI}
+\hlcom{# pretty close to .9, TLI still way off}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Question 3}
+\textbf{\large{\textit{
+Fit a longitudinal CFA model where you a) first correlate your latent factors across time and then b) a second model that predicts later times by a prevous time (ie auto regressive; t1 -> t2 -> t3). What are your conclusions? How does one differ from the other?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#make plans wide}
+\hlcom{#create subset of data and widen}
+\hlstd{plansub} \hlkwb{<-} \hlkwd{subset}\hlstd{(plan,} \hlkwc{select} \hlstd{=} \hlkwd{c}\hlstd{(ID, week, makedietplans, planmealtimes, maketempplan))}
+\hlkwd{library}\hlstd{(reshape2)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# \\\#\# Attaching package: 'reshape2'}}
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# The following object is masked from 'package:tidyr':\\\#\# \\\#\#\ \ \ \  smiths}}\begin{alltt}
+\hlstd{plansub} \hlkwb{<-} \hlkwd{reshape}\hlstd{(plansub,} \hlkwc{idvar} \hlstd{=} \hlstr{"ID"}\hlstd{,} \hlkwc{timevar} \hlstd{=} \hlstr{"week"}\hlstd{,} \hlkwc{direction} \hlstd{=} \hlstr{"wide"}\hlstd{)}
+
+\hlstd{longcfa} \hlkwb{<-} \hlstr{[1126 chars quoted with ''']}
+
+\hlstd{fit.long.cfa} \hlkwb{<-} \hlkwd{cfa}\hlstd{(longcfa,} \hlkwc{data}\hlstd{=plansub,} \hlkwc{std.lv}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_model\_vcov(lavmodel = lavmodel, lavsamplestats = lavsamplestats, : lavaan WARNING: could not compute standard errors!\\\#\#\ \  lavaan NOTE: this may be a symptom that the model is not identified.}}
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: the covariance matrix of the residuals of the observed\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  variables (theta) is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}theta"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(fit.long.cfa,} \hlkwc{standardized}\hlstd{=}\hlnum{TRUE}\hlstd{,} \hlkwc{fit.measures}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after  65 iterations
+## 
+##                                                   Used       Total
+##   Number of observations                            55         132
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic              123.986
+##   Degrees of freedom                                57
+##   P-value (Chi-square)                           0.000
+## 
+## Model test baseline model:
+## 
+##   Minimum Function Test Statistic              422.661
+##   Degrees of freedom                               105
+##   P-value                                        0.000
+## 
+## User model versus baseline model:
+## 
+##   Comparative Fit Index (CFI)                    0.789
+##   Tucker-Lewis Index (TLI)                       0.612
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)               -909.085
+##   Loglikelihood unrestricted model (H1)       -847.092
+## 
+##   Number of free parameters                         63
+##   Akaike (AIC)                                1944.170
+##   Bayesian (BIC)                              2070.632
+##   Sample-size adjusted Bayesian (BIC)         1872.665
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.146
+##   90 Percent Confidence Interval          0.111  0.181
+##   P-value RMSEA <= 0.05                          0.000
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.107
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   makedietplans =~                                                      
+##     makedietplns.0    0.246       NA                      0.246    0.242
+##     makeditplns.10    0.692       NA                      0.692    0.762
+##     makeditplns.20    0.897       NA                      0.897    0.984
+##     makeditplns.30    0.511       NA                      0.511    0.860
+##     makeditplns.40    0.392       NA                      0.392    0.660
+##   planmealtimes =~                                                      
+##     planmealtims.0    0.314       NA                      0.314    0.296
+##     planmealtms.10    1.062       NA                      1.062    0.883
+##     planmealtms.20    0.658       NA                      0.658    0.648
+##     planmealtms.30    0.691       NA                      0.691    0.712
+##     planmealtms.40    0.733       NA                      0.733    0.745
+##   maketempplan =~                                                       
+##     maketempplan.0    0.242       NA                      0.242    0.243
+##     maketemppln.10    0.638       NA                      0.638    0.779
+##     maketemppln.20    0.769       NA                      0.769    0.867
+##     maketemppln.30    0.670       NA                      0.670    0.885
+##     maketemppln.40    0.416       NA                      0.416    0.644
+## 
+## Covariances:
+##                       Estimate  Std.Err  z-value  P(>|z|)   Std.lv
+##  .makedietplans.0 ~~                                              
+##    .makeditplns.10       0.017       NA                      0.017
+##    .makeditplns.20      -0.092       NA                     -0.092
+##    .makeditplns.30      -0.067       NA                     -0.067
+##    .makeditplns.40      -0.020       NA                     -0.020
+##  .makedietplans.10 ~~                                             
+##    .makeditplns.20      -0.187       NA                     -0.187
+##    .makeditplns.30      -0.181       NA                     -0.181
+##    .makeditplns.40      -0.135       NA                     -0.135
+##  .makedietplans.20 ~~                                             
+##    .makeditplns.30      -0.128       NA                     -0.128
+##    .makeditplns.40      -0.022       NA                     -0.022
+##  .makedietplans.30 ~~                                             
+##    .makeditplns.40       0.043       NA                      0.043
+##  .planmealtimes.0 ~~                                              
+##    .planmealtms.10      -0.096       NA                     -0.096
+##    .planmealtms.20       0.038       NA                      0.038
+##    .planmealtms.30       0.139       NA                      0.139
+##    .planmealtms.40      -0.172       NA                     -0.172
+##  .planmealtimes.10 ~~                                             
+##    .planmealtms.20      -0.122       NA                     -0.122
+##    .planmealtms.30      -0.210       NA                     -0.210
+##    .planmealtms.40      -0.113       NA                     -0.113
+##  .planmealtimes.20 ~~                                             
+##    .planmealtms.30       0.040       NA                      0.040
+##    .planmealtms.40       0.136       NA                      0.136
+##  .planmealtimes.30 ~~                                             
+##    .planmealtms.40      -0.066       NA                     -0.066
+##  .maketempplan.0 ~~                                               
+##    .maketemppln.10       0.087       NA                      0.087
+##    .maketemppln.20      -0.151       NA                     -0.151
+##    .maketemppln.30      -0.022       NA                     -0.022
+##    .maketemppln.40      -0.123       NA                     -0.123
+##  .maketempplan.10 ~~                                              
+##    .maketemppln.20      -0.106       NA                     -0.106
+##    .maketemppln.30      -0.109       NA                     -0.109
+##    .maketemppln.40      -0.157       NA                     -0.157
+##  .maketempplan.20 ~~                                              
+##    .maketemppln.30      -0.200       NA                     -0.200
+##    .maketemppln.40      -0.071       NA                     -0.071
+##  .maketempplan.30 ~~                                              
+##    .maketemppln.40      -0.118       NA                     -0.118
+##   makedietplans ~~                                                
+##     planmealtimes        0.613       NA                      0.613
+##     maketempplan         0.543       NA                      0.543
+##   planmealtimes ~~                                                
+##     maketempplan         0.651       NA                      0.651
+##   Std.all
+##          
+##     0.029
+##    -0.565
+##    -0.224
+##    -0.045
+##          
+##    -1.935
+##    -1.016
+##    -0.514
+##          
+##    -2.570
+##    -0.295
+##          
+##     0.320
+##          
+##    -0.168
+##     0.048
+##     0.201
+##    -0.259
+##          
+##    -0.279
+##    -0.547
+##    -0.304
+##          
+##     0.075
+##     0.268
+##          
+##    -0.148
+##          
+##     0.175
+##    -0.353
+##    -0.064
+##    -0.259
+##          
+##    -0.468
+##    -0.602
+##    -0.620
+##          
+##    -1.278
+##    -0.324
+##          
+##    -0.678
+##          
+##     0.613
+##     0.543
+##          
+##     0.651
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##    .makedietplns.0    0.976       NA                      0.976    0.942
+##    .makeditplns.10    0.345       NA                      0.345    0.419
+##    .makeditplns.20    0.027       NA                      0.027    0.033
+##    .makeditplns.30    0.092       NA                      0.092    0.260
+##    .makeditplns.40    0.199       NA                      0.199    0.564
+##    .planmealtims.0    1.030       NA                      1.030    0.913
+##    .planmealtms.10    0.319       NA                      0.319    0.220
+##    .planmealtms.20    0.599       NA                      0.599    0.580
+##    .planmealtms.30    0.464       NA                      0.464    0.493
+##    .planmealtms.40    0.430       NA                      0.430    0.445
+##    .maketempplan.0    0.931       NA                      0.931    0.941
+##    .maketemppln.10    0.263       NA                      0.263    0.393
+##    .maketemppln.20    0.196       NA                      0.196    0.249
+##    .maketemppln.30    0.124       NA                      0.124    0.217
+##    .maketemppln.40    0.245       NA                      0.245    0.585
+##     makedietplans     1.000                               1.000    1.000
+##     planmealtimes     1.000                               1.000    1.000
+##     maketempplan      1.000                               1.000    1.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{#CROSS_LAGGED - took down to two latent variables}
+\hlstd{long.cross} \hlkwb{<-} \hlstr{[1810 chars quoted with ''']}
+
+\hlstd{fit.long.cross} \hlkwb{<-} \hlkwd{sem}\hlstd{(long.cross,} \hlkwc{data}\hlstd{=plansub,} \hlkwc{std.lv}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lavaan::lavaan(model = long.cross, data = plansub, std.lv = TRUE, : lavaan WARNING: model has NOT converged!}}\begin{alltt}
+\hlkwd{summary}\hlstd{(fit.long.cross,} \hlkwc{standardized}\hlstd{=}\hlnum{TRUE}\hlstd{,} \hlkwc{fit.measures}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+## ** WARNING ** lavaan (0.5-23.1097) did NOT converge after 10000 iterations
+## ** WARNING ** Estimates below are most likely unreliable
+## 
+##                                                   Used       Total
+##   Number of observations                            55         132
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic                   NA
+##   Degrees of freedom                                NA
+##   P-value                                           NA
+\end{verbatim}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in .local(object, ...): lavaan WARNING: fit measures not available if model did not converge}}\begin{verbatim}
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   makedietplans =~                                                      
+##     makedietplns.0    0.856       NA                      0.856    0.838
+##     makeditplns.10    9.975       NA                      9.975   10.983
+##     makeditplns.20    0.958       NA                      0.958    1.052
+##     makeditplns.30   -0.000       NA                     -0.000   -0.000
+##     makeditplns.40    0.017       NA                      0.017    0.028
+##   planmealtimes =~                                                      
+##     planmealtims.0    1.347       NA                      1.347    1.260
+##     planmealtms.10    7.759       NA                      7.759    6.452
+##     planmealtms.20    0.530       NA                      0.530    0.521
+##     planmealtms.30    5.931       NA                      5.931    6.133
+##     planmealtms.40   -0.350       NA                     -0.350   -0.359
+## 
+## Regressions:
+##                      Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##   makedietplans.10 ~                                                      
+##     makedietplns.0     -2.391       NA                     -2.391   -2.691
+##     planmealtims.0     -4.937       NA                     -4.937   -5.808
+##   planmealtimes.10 ~                                                      
+##     planmealtims.0      4.342       NA                      4.342    3.858
+##     makedietplns.0     -5.911       NA                     -5.911   -5.025
+##   makedietplans.20 ~                                                      
+##     makeditplns.10     -3.295       NA                     -3.295   -3.288
+##     planmealtms.10     -0.011       NA                     -0.011   -0.015
+##   planmealtimes.20 ~                                                      
+##     planmealtms.10     -2.222       NA                     -2.222   -2.627
+##     makeditplns.10      1.883       NA                      1.883    1.681
+##   makedietplans.30 ~                                                      
+##     makeditplns.20      0.368       NA                      0.368    0.565
+##     planmealtms.20      0.066       NA                      0.066    0.113
+##   planmealtimes.30 ~                                                      
+##     planmealtms.20    -21.358       NA                    -21.358  -22.466
+##     makeditplns.20     12.430       NA                     12.430   11.703
+##   makedietplans.40 ~                                                      
+##     makeditplns.30      1.042       NA                      1.042    1.045
+##     planmealtms.30     -0.101       NA                     -0.101   -0.165
+##   planmealtimes.40 ~                                                      
+##     planmealtms.30      0.989       NA                      0.989    0.981
+##     makeditplns.30      0.056       NA                      0.056    0.034
+## 
+## Covariances:
+##                       Estimate  Std.Err  z-value  P(>|z|)   Std.lv
+##  .makedietplans.10 ~~                                             
+##    .planmealtms.10     -37.542       NA                    -37.542
+##  .makedietplans.20 ~~                                             
+##    .planmealtms.20       1.135       NA                      1.135
+##  .makedietplans.30 ~~                                             
+##    .planmealtms.30      -2.023       NA                     -2.023
+##  .makedietplans.40 ~~                                             
+##    .planmealtms.40      -0.128       NA                     -0.128
+##  .makedietplans.0 ~~                                              
+##    .makeditplns.10      -2.740       NA                     -2.740
+##    .makeditplns.20      -0.070       NA                     -0.070
+##    .makeditplns.30      -0.007       NA                     -0.007
+##    .makeditplns.40       0.009       NA                      0.009
+##  .makedietplans.10 ~~                                             
+##    .makeditplns.20      -1.123       NA                     -1.123
+##    .makeditplns.30      -0.022       NA                     -0.022
+##    .makeditplns.40      -0.060       NA                     -0.060
+##  .makedietplans.20 ~~                                             
+##    .makeditplns.30      -0.021       NA                     -0.021
+##    .makeditplns.40      -0.026       NA                     -0.026
+##  .makedietplans.30 ~~                                             
+##    .makeditplns.40      -0.112       NA                     -0.112
+##  .planmealtimes.0 ~~                                              
+##    .planmealtms.10     -11.432       NA                    -11.432
+##    .planmealtms.20      -0.282       NA                     -0.282
+##    .planmealtms.30      -3.065       NA                     -3.065
+##    .planmealtms.40       0.174       NA                      0.174
+##  .planmealtimes.10 ~~                                             
+##    .planmealtms.20      -1.936       NA                     -1.936
+##    .planmealtms.30     -45.316       NA                    -45.316
+##    .planmealtms.40       3.174       NA                      3.174
+##  .planmealtimes.20 ~~                                             
+##    .planmealtms.30      24.526       NA                     24.526
+##    .planmealtms.40       0.695       NA                      0.695
+##  .planmealtimes.30 ~~                                             
+##    .planmealtms.40       4.704       NA                      4.704
+##   makedietplans ~~                                                
+##     planmealtimes        0.546       NA                      0.546
+##   Std.all
+##          
+##    -0.952
+##          
+##     0.126
+##          
+##    -0.219
+##          
+##    -0.282
+##          
+##    -0.715
+##    -0.036
+##    -0.025
+##     0.033
+##          
+##    -0.048
+##    -0.007
+##    -0.018
+##          
+##    -0.013
+##    -0.016
+##          
+##    -0.483
+##          
+##    -2.429
+##    -0.131
+##    -0.195
+##     0.224
+##          
+##    -0.128
+##    -0.411
+##     0.585
+##          
+##     0.487
+##     0.280
+##          
+##     0.259
+##          
+##     0.546
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+##    .makeditplns.10  -47.147       NA                    -47.147  -57.160
+##    .makeditplns.20   11.785       NA                     11.785   14.221
+##    .makeditplns.30    0.231       NA                      0.231    0.656
+##    .makeditplns.40    0.231       NA                      0.231    0.660
+##    .planmealtms.10  -32.993       NA                    -32.993  -22.816
+##    .planmealtms.20    6.893       NA                      6.893    6.663
+##    .planmealtms.30  368.537       NA                    368.537  394.156
+##    .planmealtms.40    0.893       NA                      0.893    0.940
+##    .makedietplns.0    0.312       NA                      0.312    0.298
+##    .planmealtims.0   -0.672       NA                     -0.672   -0.588
+##     makedietplans     1.000                               1.000    1.000
+##     planmealtimes     1.000                               1.000    1.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{#Not getting fit indices}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Question 4}
+\textbf{\large{\textit{
+Fit a longitdinal growth model in SEM and in HLM. Compare and contrast the differences.
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# SEM intercept only model}
+\hlstd{SEMIntOnly} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40 "}
+\hlstd{SEMIntOnlyfit} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMIntOnly,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: some estimated ov variances are negative}}\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMIntOnlyfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 128 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic              146.227
+##   Degrees of freedom                                 4
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               222.130    4.363   50.918    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0             543.873   67.543    8.052    0.000
+##    .w_20           -103.800   20.869   -4.974    0.000
+##    .w_40            236.904   36.930    6.415    0.000
+##     i              2587.453  315.006    8.214    0.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(SEMIntOnlyfit,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-5-1} 
+\begin{kframe}\begin{alltt}
+\hlcom{# intercept and fixed slope}
+\hlstd{SEMFixSlopes} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance"}
+\hlstd{SEMFixSlopesfit} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMFixSlopes,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{inspect}\hlstd{(SEMFixSlopesfit,} \hlstr{"cov.lv"}\hlstd{)}
+\end{alltt}
+\begin{verbatim}
+##   i        s       
+## i 2414.609         
+## s   -3.207    0.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 211 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.207    1.984   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.630    4.320   54.550    0.000
+##     s                -0.645    0.047  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2414.609  302.299    7.987    0.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(SEMFixSlopesfit,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in qgraph(Edgelist, labels = nLab, bidirectional = Bidir, directed = Directed, : Non-finite weights are omitted}}\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-5-2} 
+\begin{kframe}\begin{alltt}
+\hlcom{# improve model fit?}
+\hlkwd{anova}\hlstd{(SEMIntOnlyfit, SEMFixSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## Chi Square Difference Test
+## 
+##                 Df    AIC    BIC   Chisq Chisq diff Df diff Pr(>Chisq)    
+## SEMFixSlopesfit  2 2819.0 2839.5  32.411                                  
+## SEMIntOnlyfit    4 2928.8 2943.4 146.227     113.82       2  < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+\begin{alltt}
+\hlcom{# yes}
+
+\hlcom{# intercept and random slope}
+\hlstd{SEMRanSlopes} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40"}
+\hlstd{SEMRanSlopesfit} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMRanSlopes,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\hlkwd{summary}\hlstd{(SEMRanSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 183 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.395
+##   Degrees of freedom                                 1
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.579    3.597   -0.995    0.320
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.853    4.676   50.435    0.000
+##     s                -0.645    0.047  -13.693    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0             136.781  112.282    1.218    0.223
+##    .w_20             31.027   53.281    0.582    0.560
+##    .w_40             81.713  104.498    0.782    0.434
+##     i              2421.742  308.612    7.847    0.000
+##     s                 0.017    0.137    0.125    0.901
+\end{verbatim}
+\begin{alltt}
+\hlkwd{semPaths}\hlstd{(SEMRanSlopesfit,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-5-3} 
+\begin{kframe}\begin{alltt}
+\hlcom{# improve model fit?}
+\hlkwd{anova}\hlstd{(SEMFixSlopesfit, SEMRanSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## Chi Square Difference Test
+## 
+##                 Df    AIC    BIC  Chisq Chisq diff Df diff Pr(>Chisq)
+## SEMRanSlopesfit  1 2820.9 2844.4 32.395                              
+## SEMFixSlopesfit  2 2819.0 2839.5 32.411    0.01545       1     0.9011
+\end{verbatim}
+\begin{alltt}
+\hlcom{# nope - random slope doesn't improve fit}
+
+\hlcom{# MLM}
+\hlstd{MLMIntOnly} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlnum{1} \hlopt{+} \hlstd{(}\hlnum{1} \hlopt{|} \hlstd{ID),} \hlkwc{data} \hlstd{= wgt)}
+\hlkwd{summary}\hlstd{(MLMIntOnly)}
+\end{alltt}
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: weight ~ 1 + (1 | ID)
+##    Data: wgt
+## 
+## REML criterion at convergence: 29522.2
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.9151 -0.5917 -0.1142  0.5112  4.8113 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  ID       (Intercept) 2465.02  49.649  
+##  Residual               89.98   9.486  
+## Number of obs: 3900, groups:  ID, 139
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept)  224.445      4.215   53.25
+\end{verbatim}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMIntOnlyfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 128 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic              146.227
+##   Degrees of freedom                                 4
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               222.130    4.363   50.918    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0             543.873   67.543    8.052    0.000
+##    .w_20           -103.800   20.869   -4.974    0.000
+##    .w_40            236.904   36.930    6.415    0.000
+##     i              2587.453  315.006    8.214    0.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# Fixed effect similar 224 vs. 222 Random effect similar variance Random}
+\hlcom{# effect residuals quite different - due to full inclusion of data in MLM?}
+\hlstd{MLMFixSlope} \hlkwb{<-} \hlkwd{lmer}\hlstd{(weight} \hlopt{~} \hlnum{1} \hlopt{+} \hlstd{wave} \hlopt{+} \hlstd{(}\hlnum{1} \hlopt{|} \hlstd{ID),} \hlkwc{data} \hlstd{= wgt)}
+\hlkwd{summary}\hlstd{(MLMFixSlope)}
+\end{alltt}
+\begin{verbatim}
+## Linear mixed model fit by REML ['lmerMod']
+## Formula: weight ~ 1 + wave + (1 | ID)
+##    Data: wgt
+## 
+## REML criterion at convergence: 26156.8
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -4.1539 -0.5597 -0.1263  0.4739  5.8045 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  ID       (Intercept) 2395.87  48.948  
+##  Residual               36.75   6.062  
+## Number of obs: 3900, groups:  ID, 139
+## 
+## Fixed effects:
+##               Estimate Std. Error t value
+## (Intercept) 234.720596   4.155461   56.48
+## wave         -0.633317   0.008576  -73.84
+## 
+## Correlation of Fixed Effects:
+##      (Intr)
+## wave -0.033
+\end{verbatim}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 211 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.207    1.984   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.630    4.320   54.550    0.000
+##     s                -0.645    0.047  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2414.609  302.299    7.987    0.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# Fixed and random effects similar}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Question 5}
+\textbf{\large{\textit{
+Constrain the residual variances to be equal. Does this change the fit of your model?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{SEMFixSlopesres} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance
+                  w_0 ~~ a*w_0
+                  w_20 ~~ a*w_20
+                  w_40 ~~ a*w_40 #residuals are equal to each other"}
+\hlstd{SEMFixSlopesfitres} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMFixSlopesres,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfitres)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 101 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               43.451
+##   Degrees of freedom                                 4
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.223    1.554   -2.074    0.038
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               237.214    4.230   56.080    0.000
+##     s                -0.676    0.036  -18.873    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0        (a)   93.166   10.135    9.192    0.000
+##    .w_20       (a)   93.166   10.135    9.192    0.000
+##    .w_40       (a)   93.166   10.135    9.192    0.000
+##     i              2402.824  292.885    8.204    0.000
+\end{verbatim}
+\begin{alltt}
+\hlstd{SEMFixSlopesfit} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMFixSlopes,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 211 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.207    1.984   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.630    4.320   54.550    0.000
+##     s                -0.645    0.047  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2414.609  302.299    7.987    0.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{anova}\hlstd{(SEMFixSlopesfit, SEMFixSlopesfitres)}
+\end{alltt}
+\begin{verbatim}
+## Chi Square Difference Test
+## 
+##                    Df  AIC    BIC  Chisq Chisq diff Df diff Pr(>Chisq)   
+## SEMFixSlopesfit     2 2819 2839.5 32.411                                 
+## SEMFixSlopesfitres  4 2826 2840.7 43.451      11.04       2   0.004005 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+\begin{alltt}
+\hlcom{# Fixing residuals to equal each other makes the model significantly worse}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Question 6}
+\textbf{\large{\textit{
+Contrain your slope to be fixed, not random. How does this change your model?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# see above}
+\hlkwd{anova}\hlstd{(SEMFixSlopesfit, SEMRanSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## Chi Square Difference Test
+## 
+##                 Df    AIC    BIC  Chisq Chisq diff Df diff Pr(>Chisq)
+## SEMRanSlopesfit  1 2820.9 2844.4 32.395                              
+## SEMFixSlopesfit  2 2819.0 2839.5 32.411    0.01545       1     0.9011
+\end{verbatim}
+\begin{alltt}
+\hlcom{# Model produces similar results with fixed and random slopes}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Question 7}
+\textbf{\large{\textit{
+Change the time metric in your SEM growth model. How does that change your estimates? Does it change your fit statistics?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{SEMFixSlopestime} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 1*w_20 + 2*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance"}
+\hlstd{SEMFixSlopesfittime} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMFixSlopestime,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfittime)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 181 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20              1.000                           
+##     w_40              2.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s               -64.138   39.688   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.630    4.320   54.550    0.000
+##     s               -12.894    0.936  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2414.607  302.298    7.987    0.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 211 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.207    1.984   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.630    4.320   54.550    0.000
+##     s                -0.645    0.047  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2414.609  302.299    7.987    0.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# same - same distance between variables.}
+
+\hlcom{# Different intercept}
+\hlstd{SEMFixSlopesint} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ -20*w_0 + 0*w_20 + 20*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance"}
+\hlstd{SEMFixSlopesfitint} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMFixSlopesint,} \hlkwc{missing} \hlstd{=} \hlstr{"ML"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfitint)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 187 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0             -20.000                           
+##     w_20              0.000                           
+##     w_40             20.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.207    1.984   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               222.736    4.131   53.913    0.000
+##     s                -0.645    0.047  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2286.333  279.643    8.176    0.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# intercept different, lower, at week 20, average weight would be lower}
+\hlcom{# random effect of intercept is lower slope and residual variance the same}
+\hlkwd{semPaths}\hlstd{(SEMFixSlopesfitint,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in qgraph(Edgelist, labels = nLab, bidirectional = Bidir, directed = Directed, : Non-finite weights are omitted}}\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-8-1} 
+
+\end{knitrout}
+
+\section{Question 8}
+\textbf{\large{\textit{
+Try a different type of estimation (see lavaan tutorial for details). How does that change your model?
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{SEMFixSlopesMLM} \hlkwb{<-} \hlstr{" i =~ 1*w_0 + 1*w_20 + 1*w_40
+                  s =~ 0*w_0 + 20*w_20 + 40*w_40
+
+                  s ~~ 0*s #fixed slopes, no variance"}
+\hlstd{SEMFixSlopesfitMLM} \hlkwb{<-} \hlkwd{growth}\hlstd{(SEMFixSlopesMLM,} \hlkwc{estimator} \hlstd{=} \hlstr{"MLM"}\hlstd{,} \hlkwc{data} \hlstd{= wgtwide)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in lav\_object\_post\_check(object): lavaan WARNING: covariance matrix of latent variables\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  is not positive definite;\\\#\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  use inspect(fit,"{}cov.lv"{}) to investigate.}}\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfitMLM)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 205 iterations
+## 
+##                                                   Used       Total
+##   Number of observations                            62         139
+## 
+##   Estimator                                         ML      Robust
+##   Minimum Function Test Statistic               37.940      69.547
+##   Degrees of freedom                                 2           2
+##   P-value (Chi-square)                           0.000       0.000
+##   Scaling correction factor                                  0.546
+##     for the Satorra-Bentler correction
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Expected
+##   Standard Errors                           Robust.sem
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -2.802    2.542   -1.103    0.270
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               229.632    6.269   36.629    0.000
+##     s                -0.609    0.050  -12.078    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             162.730   31.143    5.225    0.000
+##    .w_20             13.549   16.691    0.812    0.417
+##    .w_40            101.618   25.733    3.949    0.000
+##     i              2322.346  531.361    4.371    0.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(SEMFixSlopesfit)}
+\end{alltt}
+\begin{verbatim}
+## lavaan (0.5-23.1097) converged normally after 211 iterations
+## 
+##   Number of observations                           139
+## 
+##   Number of missing patterns                         4
+## 
+##   Estimator                                         ML
+##   Minimum Function Test Statistic               32.411
+##   Degrees of freedom                                 2
+##   P-value (Chi-square)                           0.000
+## 
+## Parameter Estimates:
+## 
+##   Information                                 Observed
+##   Standard Errors                             Standard
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i =~                                                
+##     w_0               1.000                           
+##     w_20              1.000                           
+##     w_40              1.000                           
+##   s =~                                                
+##     w_0               0.000                           
+##     w_20             20.000                           
+##     w_40             40.000                           
+## 
+## Covariances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##   i ~~                                                
+##     s                -3.207    1.984   -1.616    0.106
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##    .w_0               0.000                           
+##    .w_20              0.000                           
+##    .w_40              0.000                           
+##     i               235.630    4.320   54.550    0.000
+##     s                -0.645    0.047  -13.775    0.000
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(>|z|)
+##     s                 0.000                           
+##    .w_0             150.305   28.577    5.260    0.000
+##    .w_20             24.790   17.564    1.411    0.158
+##    .w_40             94.413   23.200    4.070    0.000
+##     i              2414.609  302.299    7.987    0.000
+\end{verbatim}
+\begin{alltt}
+\hlcom{# lower intercept, slower rate of change}
+\hlkwd{semPaths}\hlstd{(SEMFixSlopesfitMLM,} \hlkwc{what} \hlstd{=} \hlstr{"std"}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in qgraph(Edgelist, labels = nLab, bidirectional = Bidir, directed = Directed, : Non-finite weights are omitted}}\end{kframe}
+\includegraphics[width=\maxwidth]{figure/unnamed-chunk-9-1} 
+
+\end{knitrout}
+
+\section{Question 9}
+\textbf{\large{\textit{
+Provide semplots for each of the models
+}}}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# Graphs provided throughout}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\end{document}
