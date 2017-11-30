@@ -94,9 +94,11 @@ library(reshape2)
 plansub <- reshape(plansub, idvar = "ID", timevar = "week", direction = "wide")
 
 longcfa <- '
-makedietplans =~ makedietplans.0 + makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
-planmealtimes =~ planmealtimes.0 + planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
-maketempplan =~ maketempplan.0 + maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+plan1 =~ makedietplans.0 + planmealtimes.0 + maketempplan.0 
+plan2 =~ makedietplans.10 + planmealtimes.10 + maketempplan.10 
+plan3 =~ makedietplans.20 + planmealtimes.20 + maketempplan.20 
+plan4 =~ makedietplans.30 + planmealtimes.30 + maketempplan.30 
+plan5 =~ makedietplans.40 + planmealtimes.40 + maketempplan.40 
 
 #correlated residuals across time
 makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
@@ -117,36 +119,34 @@ fit.long.cfa <- cfa(longcfa, data=plansub, std.lv=TRUE)
 
 summary(fit.long.cfa, standardized=TRUE, fit.measures=TRUE)
 
-#CROSS_LAGGED - took down to two latent variables
+#Getting "not positive definite" error
+#CFI: 0.984
+#TLI: 0.966
+#Both above 0.95, which is good!
+#RMSEA: 0.043
+#SRMR: 0.081
+#SRMR slightly over 0.08, but RMSEA well under - good fit!
+
+#CROSS_LAGGED
 long.cross <- '
 ## define latent variables
-makedietplans =~ makedietplans.0 + makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
-planmealtimes =~ planmealtimes.0 + planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+plan1 =~ makedietplans.0 + planmealtimes.0 + maketempplan.0
+plan2 =~ makedietplans.10 + planmealtimes.10 + maketempplan.10
+plan3 =~ makedietplans.20 + planmealtimes.20 + maketempplan.20
+plan4 =~ makedietplans.30 + planmealtimes.30 + maketempplan.30
+plan5 =~ makedietplans.40 + planmealtimes.40 + maketempplan.40
 
 ## free latent variances at later times (only set the scale once)
-makedietplans.10 ~~ NA*makedietplans.10
-makedietplans.20 ~~ NA*makedietplans.20
-makedietplans.30 ~~ NA*makedietplans.30
-makedietplans.40 ~~ NA*makedietplans.40
-planmealtimes.10 ~~ NA*planmealtimes.10
-planmealtimes.20 ~~ NA*planmealtimes.20
-planmealtimes.30 ~~ NA*planmealtimes.30
-planmealtimes.40 ~~ NA*planmealtimes.40
-
-makedietplans.10 ~~ planmealtimes.10
-makedietplans.20 ~~ planmealtimes.20
-makedietplans.30 ~~ planmealtimes.30
-makedietplans.40 ~~ planmealtimes.40
+plan2 ~~ NA*plan2
+plan3 ~~ NA*plan3
+plan4 ~~ NA*plan4
+plan5 ~~ NA*plan5
 
 ## directional regression paths
-makedietplans.10 ~ makedietplans.0 + planmealtimes.0
-planmealtimes.10 ~ planmealtimes.0 + makedietplans.0
-makedietplans.20 ~ makedietplans.10 + planmealtimes.10
-planmealtimes.20 ~ planmealtimes.10 + makedietplans.10
-makedietplans.30 ~ makedietplans.20 + planmealtimes.20
-planmealtimes.30 ~ planmealtimes.20 + makedietplans.20
-makedietplans.40 ~ makedietplans.30 + planmealtimes.30
-planmealtimes.40 ~ planmealtimes.30 + makedietplans.30
+plan2 ~ plan1
+plan3 ~ plan2
+plan4 ~ plan3
+plan5 ~ plan4
 
 ## correlated residuals across time
 makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
@@ -157,12 +157,17 @@ planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + plan
 planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
 planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
 planmealtimes.30 ~~ planmealtimes.40
+maketempplan.0 ~~ maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.10 ~~ maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.20 ~~ maketempplan.30 + maketempplan.40
+maketempplan.30 ~~ maketempplan.40
 '
 
 fit.long.cross <- sem(long.cross, data=plansub, std.lv=TRUE)
 
 summary(fit.long.cross, standardized=TRUE, fit.measures=TRUE)
-#Not getting fit indices
+# Model not identified
+# error that some lv variances are negative
 @
 
 \section{Question 4}
@@ -182,10 +187,11 @@ semPaths(SEMIntOnlyfit, what = "std")
 SEMFixSlopes <- ' i =~ 1*w_0 + 1*w_20 + 1*w_40
                   s =~ 0*w_0 + 20*w_20 + 40*w_40
 
-                  s ~~ 0*s #fixed slopes, no variance'
+                  s ~~ 0*s' #fixed slopes, no variance
 SEMFixSlopesfit <- growth(SEMFixSlopes, missing = "ML", data = wgtwide)
 inspect(SEMFixSlopesfit, "cov.lv")
 summary(SEMFixSlopesfit)
+semPaths(SEMFixSlopesfit, what = "paths", whatLabels= "est", layout = "tree")
 semPaths(SEMFixSlopesfit, what = "std")
 
 #improve model fit?
@@ -300,6 +306,310 @@ Provide semplots for each of the models
 
 <<tidy=TRUE>>=
 #Graphs provided throughout
+@
+
+\section{Question 10}
+\textbf{\large{\textit{
+Test measurement invariance across time for your construct. Can you run growth models? If there is evidence of non-invariance, what seems to be the problem?
+}}}
+
+<<tidy=TRUE>>=
+#CONFIGURAL
+config <- '
+#Define latent variables
+plan1 =~ makedietplans.0 + planmealtimes.0 + maketempplan.0
+plan2 =~ makedietplans.10 + planmealtimes.10 + maketempplan.10
+plan3 =~ makedietplans.20 + planmealtimes.20 + maketempplan.20
+plan4 =~ makedietplans.30 + planmealtimes.30 + maketempplan.30
+plan5 =~ makedietplans.40 + planmealtimes.40 + maketempplan.40
+
+#correlated residuals across time
+makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.10 ~~ makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.20 ~~ makedietplans.30 + makedietplans.40
+makedietplans.30 ~~ makedietplans.40
+planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
+planmealtimes.30 ~~ planmealtimes.40
+maketempplan.0 ~~ maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.10 ~~ maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.20 ~~ maketempplan.30 + maketempplan.40
+maketempplan.30 ~~ maketempplan.40
+'
+
+config <- cfa(config, data=plansub, meanstructure=TRUE, std.lv=TRUE)
+
+summary(config, standardized=TRUE, fit.measures=TRUE)
+
+#CFI and TLI good
+
+#WEAK
+weak <- '
+plan1 =~ L1*makedietplans.0 + L2*planmealtimes.0 + L3*maketempplan.0
+plan2 =~ L1*makedietplans.10 + L2*planmealtimes.10 + L3*maketempplan.10
+plan3 =~ L1*makedietplans.20 + L2*planmealtimes.20 + L3*maketempplan.20
+plan4 =~ L1*makedietplans.30 + L2*planmealtimes.30 + L3*maketempplan.30
+plan5 =~ L1*makedietplans.40 + L2*planmealtimes.40 + L3*maketempplan.40
+
+#free latent variances at later times (only set the scale once)
+plan2 ~~ NA*plan2
+plan3 ~~ NA*plan3
+plan4 ~~ NA*plan4
+plan5 ~~ NA*plan5
+
+#correlated residuals across time
+makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.10 ~~ makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.20 ~~ makedietplans.30 + makedietplans.40
+makedietplans.30 ~~ makedietplans.40
+planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
+planmealtimes.30 ~~ planmealtimes.40
+maketempplan.0 ~~ maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.10 ~~ maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.20 ~~ maketempplan.30 + maketempplan.40
+maketempplan.30 ~~ maketempplan.40
+'
+weak <- cfa(weak, data=plansub, meanstructure=TRUE, std.lv=TRUE)
+
+summary(weak, standardized=TRUE, fit.measures=TRUE)
+#Get not positive definite error
+
+anova(config, weak)
+
+#STRONG
+strong <- '
+plan1 =~ L1*makedietplans.0 + L2*planmealtimes.0 + L3*maketempplan.0
+plan2 =~ L1*makedietplans.10 + L2*planmealtimes.10 + L3*maketempplan.10
+plan3 =~ L1*makedietplans.20 + L2*planmealtimes.20 + L3*maketempplan.20
+plan4 =~ L1*makedietplans.30 + L2*planmealtimes.30 + L3*maketempplan.30
+plan5 =~ L1*makedietplans.40 + L2*planmealtimes.40 + L3*maketempplan.40
+
+#free latent variances at later times (only set the scale once)
+plan2 ~~ NA*plan2
+plan3 ~~ NA*plan3
+plan4 ~~ NA*plan4
+plan5 ~~ NA*plan5
+
+#correlated residuals across time
+makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.10 ~~ makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.20 ~~ makedietplans.30 + makedietplans.40
+makedietplans.30 ~~ makedietplans.40
+planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
+planmealtimes.30 ~~ planmealtimes.40
+maketempplan.0 ~~ maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.10 ~~ maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.20 ~~ maketempplan.30 + maketempplan.40
+maketempplan.30 ~~ maketempplan.40
+
+## constrain intercepts across time
+makedietplans.0 ~ t1*1
+planmealtimes.0 ~ t2*1
+maketempplan.0 ~ t3*1
+
+makedietplans.10 ~ t1*1
+planmealtimes.10 ~ t2*1
+maketempplan.10 ~ t3*1
+
+makedietplans.20 ~ t1*1
+planmealtimes.20 ~ t2*1
+maketempplan.20 ~ t3*1
+
+makedietplans.30 ~ t1*1
+planmealtimes.30 ~ t2*1
+maketempplan.30 ~ t3*1
+
+makedietplans.40 ~ t1*1
+planmealtimes.40 ~ t2*1
+maketempplan.40 ~ t3*1
+
+## free latent means at later times (only set the scale once)
+plan2 ~ NA*1
+plan3 ~ NA*1
+plan4 ~ NA*1
+plan5 ~ NA*1
+'
+
+strong <- cfa(strong, data=plansub, meanstructure=TRUE, std.lv=TRUE)
+
+summary(strong, standardized=TRUE, fit.measures=TRUE)
+#Still getting the not positive definite error
+
+#CFIs of models
+fitmeasures(config)['cfi']
+fitmeasures(weak)['cfi']
+fitmeasures(strong)['cfi']
+#Decreasing by more than .01 with each model
+
+#Comparison of models with anova function
+anova(config, weak)
+anova(weak, strong)
+#also show significant differences
+
+#There is evidence of non-invariance. If I were to speculate, the reason why the invariance is occurring is because the 
+#questionnaire asks about planning. Participants completed at baseline, potentially before having a good indication of
+#what meal planning really was. Then, across the program, it's possible the concept of meal planning changed as people
+#got good at it and it required less effort.
+@
+
+\section{Question 11}
+\textbf{\large{\textit{
+Fit a second order growth model. Compare and contrast the estimates with the normal latent growth model.
+}}}
+
+<<tidy=TRUE>>=
+sec.order <- '
+## define latent variables
+plan1 =~ NA*makedietplans.0 + L1*makedietplans.0 + L2*planmealtimes.0 + L3*maketempplan.0
+plan2 =~ NA*makedietplans.10 + L1*makedietplans.10 + L2*planmealtimes.10 + L3*maketempplan.10
+plan3 =~ NA*makedietplans.20 + L1*makedietplans.20 + L2*planmealtimes.20 + L3*maketempplan.20
+plan4 =~ NA*makedietplans.30 + L1*makedietplans.30 + L2*planmealtimes.30 + L3*maketempplan.30
+plan5 =~ NA*makedietplans.40 + L1*makedietplans.40 + L2*planmealtimes.40 + L3*maketempplan.40
+
+## constrain intercepts across time
+makedietplans.0 ~ t1*1
+planmealtimes.0 ~ t2*1
+maketempplan.0 ~ t3*1
+
+makedietplans.10 ~ t1*1
+planmealtimes.10 ~ t2*1
+maketempplan.10 ~ t3*1
+
+makedietplans.20 ~ t1*1
+planmealtimes.20 ~ t2*1
+maketempplan.20 ~ t3*1
+
+makedietplans.30 ~ t1*1
+planmealtimes.30 ~ t2*1
+maketempplan.30 ~ t3*1
+
+makedietplans.40 ~ t1*1
+planmealtimes.40 ~ t2*1
+maketempplan.40 ~ t3*1
+
+## correlated residuals across time
+makedietplans.0 ~~ makedietplans.10 + makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.10 ~~ makedietplans.20 + makedietplans.30 + makedietplans.40
+makedietplans.20 ~~ makedietplans.30 + makedietplans.40
+makedietplans.30 ~~ makedietplans.40
+planmealtimes.0 ~~ planmealtimes.10 + planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.10 ~~ planmealtimes.20 + planmealtimes.30 + planmealtimes.40
+planmealtimes.20 ~~ planmealtimes.30 + planmealtimes.40
+planmealtimes.30 ~~ planmealtimes.40
+maketempplan.0 ~~ maketempplan.10 + maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.10 ~~ maketempplan.20 + maketempplan.30 + maketempplan.40
+maketempplan.20 ~~ maketempplan.30 + maketempplan.40
+maketempplan.30 ~~ maketempplan.40
+
+
+## latent variable intercepts
+plan1 ~ 0*1
+plan2 ~ 0*1
+plan3 ~ 0*1
+plan4 ~ 0*1
+plan5 ~ 0*1
+
+#model constraints for effect coding
+## loadings must average to 1
+L1 == 3 - L2 - L3
+## means must average to 0
+t1 == 0 - t2 - t3
+
+i =~ 1*plan1 + 1*plan2 + 1*plan3 + 1*plan4 + 1*plan5
+s =~ 0*plan1 + 10*plan2 + 20*plan3 + 30*plan4 + 40*plan5
+'
+
+fit.sec.order <- growth(sec.order, data=plansub, missing = "ML")
+summary(fit.sec.order, fit.measures=TRUE)
+
+#Normal latent growth model for planning data
+#create variables
+plansub$plan1 <- plansub$makedietplans.0 + plansub$planmealtimes.0 + plansub$maketempplan.0
+plansub$plan2 <- plansub$makedietplans.10 + plansub$planmealtimes.10 + plansub$maketempplan.10
+plansub$plan3 <- plansub$makedietplans.20 + plansub$planmealtimes.20 + plansub$maketempplan.20
+plansub$plan4 <- plansub$makedietplans.30 + plansub$planmealtimes.30 + plansub$maketempplan.30
+plansub$plan5 <- plansub$makedietplans.40 + plansub$planmealtimes.40 + plansub$maketempplan.40
+
+#intercept and fixed slope
+SEMFixSlopesplan <- ' i =~ 1*plan1 + 1*plan2 + 1*plan3 + 1*plan4 + 1*plan5
+                  s =~ 0*plan1 + 10*plan2 + 20*plan3 + 30*plan4 + 40*plan5
+                  s ~~ 0*s' #fixed slopes, no variance
+SEMFixSlopesplanfit <- growth(SEMFixSlopesplan, missing = "ML", data = plansub)
+inspect(SEMFixSlopesplanfit, "cov.lv")
+summary(SEMFixSlopesplanfit)
+# not getting fit indices - not positive definite error
+
+#intercept and random slope
+SEMRanSlopesplan <- ' i =~ 1*plan1 + 1*plan2 + 1*plan3 + 1*plan4 + 1*plan5
+                  s =~ 0*plan1 + 10*plan2 + 20*plan3 + 30*plan4 + 40*plan5'
+SEMRanSlopesplanfit <- growth(SEMRanSlopesplan, missing = "ML", data = plansub)
+summary(SEMRanSlopesplanfit)
+
+#improve model fit?
+anova(SEMFixSlopesplanfit, SEMRanSlopesplanfit)
+#nope - random slope doesn't improve fit
+
+#can't get fit indices in the normal one to compare to the second order one
+@
+
+\section{Question 12}
+\textbf{\large{\textit{
+Fit a series of multiple group models. Constrain some parameters and compare the fit.
+}}}
+
+<<tidy=TRUE>>=
+#Adding Gender to dataset
+plan1<- dplyr::left_join(plan, dems, by="ID")
+
+#Multiple Groups
+group1 <- ' make  =~ makedietplans + planmealtimes + maketempplan     
+follow =~ followdietplans + followmealtimes + followtempplan
+
+make ~~ 1*make
+follow ~~ 1*follow
+
+make ~~ follow
+'
+fit.group.1 <- cfa(group1, data=plan1, std.lv=TRUE, group = "gender")
+
+summary(fit.group.1, standardized=TRUE, fit.measures=TRUE)
+
+#Multiple Groups - Constraints
+group2 <- ' make  =~ c(L1,L1)*makedietplans + c(L2,L2)*planmealtimes + c(L3,L3)*maketempplan     
+follow =~ followdietplans + followmealtimes + followtempplan
+
+make ~~ 1*make
+follow ~~ 1*follow
+
+make ~~ follow
+'
+fit.group.2 <- cfa(group2, data=plan1, std.lv=TRUE, group = "gender")
+
+summary(fit.group.2, standardized=TRUE, fit.measures=TRUE)
+
+anova(fit.group.1,fit.group.2)
+#no improvements with constraints
+
+#Keeping Loading and Intercepts the Same
+group3 <- ' make  =~ makedietplans + planmealtimes + maketempplan     
+follow =~ followdietplans + followmealtimes + followtempplan
+
+make ~~ 1*make
+follow ~~ 1*follow
+
+make ~~ follow
+'
+fit.group.3 <- cfa(group3, data=plan1, std.lv=TRUE, group = "gender", group.equal=c("loadings", "intercepts"))
+
+summary(fit.group.3, standardized=TRUE, fit.measures=TRUE)
+
+anova(fit.group.1,fit.group.3)
+#Setting loadings and intercepts equal across groups makes fit worse
 @
 
 \end{document}
