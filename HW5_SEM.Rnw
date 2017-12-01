@@ -538,7 +538,8 @@ plansub$plan5 <- plansub$makedietplans.40 + plansub$planmealtimes.40 + plansub$m
 #intercept and fixed slope
 SEMFixSlopesplan <- ' i =~ 1*plan1 + 1*plan2 + 1*plan3 + 1*plan4 + 1*plan5
                   s =~ 0*plan1 + 10*plan2 + 20*plan3 + 30*plan4 + 40*plan5
-                  s ~~ 0*s' #fixed slopes, no variance
+                  s ~~ 0*s  
+                  i ~~ 0*s' #fixed slopes, no variance and specify no correlation between fixed slope and intercept
 SEMFixSlopesplanfit <- growth(SEMFixSlopesplan, missing = "ML", data = plansub)
 inspect(SEMFixSlopesplanfit, "cov.lv")
 summary(SEMFixSlopesplanfit)
@@ -546,8 +547,10 @@ summary(SEMFixSlopesplanfit)
 
 #intercept and random slope
 SEMRanSlopesplan <- ' i =~ 1*plan1 + 1*plan2 + 1*plan3 + 1*plan4 + 1*plan5
-                  s =~ 0*plan1 + 10*plan2 + 20*plan3 + 30*plan4 + 40*plan5'
+                  s =~ 0*plan1 + 10*plan2 + 20*plan3 + 30*plan4 + 40*plan5
+                  i ~~ 0*s'
 SEMRanSlopesplanfit <- growth(SEMRanSlopesplan, missing = "ML", data = plansub)
+inspect(SEMRanSlopesplanfit, "cov.lv")
 summary(SEMRanSlopesplanfit)
 
 #improve model fit?
